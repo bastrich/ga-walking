@@ -4,11 +4,6 @@ import copy
 import pickle
 
 # TODO: we should exploit the Fourier property for which higher harmonics weights tend to decays as 1/x^n for smooth and continous functions
-# working with pickle
-# fileObject = open(file_Name, 'r')
-# w_best = pickle.load(fileObject)
-# pickle.dump(w_best,fileObject)
-
 
 class WalkingStrategy:
     def __init__(self, period):
@@ -51,17 +46,11 @@ class WalkingStrategy:
 
         return result
 
-class WalkingStrategyPopulation:
-    def __init__(self, size):
-        self.walking_strategies = [WalkingStrategy() for _ in range(size)]
+def crossover(walking_strategy_1, walking_strategy_2):
+    return walking_strategy_1
 
 
-
-
-def evolve(w):
-    # This functions evolves randomly w generating a direction, sampling from gaussians distribution.
-    # It operates directly on w so it doesn't return anything.
-
+def mutate(walking_strategy):
     for i in range(9):
         w[i] += np.random.randn(8) * alpha
     """
@@ -73,109 +62,109 @@ def evolve(w):
         w[i]+=delta
     """
 
-w_try = copy.deepcopy(w)
-best_reward = 0.
-runs = 20
-unev_runs = 0
+    return walking_strategy
 
-print("Baseline, run with w_best")
-observation = env.reset()
-total_reward = 0.0
-for i in range(500):
-    i *= 0.01
-    if i > 2:
-        i -= 2
-        observation, reward, done, info = env.step(generate_input(w_best, i))
-        T = 2
-    else:
-        # make a step given by the controller and record the state and the reward
-        observation, reward, done, info = env.step(generate_input(w_first, i))
-    total_reward += reward
-    if done:
-        break
-best_reward = total_reward
+class WalkingStrategyPopulation:
+    def __init__(self, **kwargs):
+        walking_strategies = kwargs.get('walking_strategies')
+        if walking_strategies is not None:
+            self.walking_strategies = walking_strategies
+            return
 
-# Your reward is
-print("Total reward %f" % total_reward)
+        size = kwargs.get('size')
+        if size is not None:
+            self.walking_strategies = [WalkingStrategy(100) for _ in range(size)]
+            return
 
-for run in range(runs):
+        raise Exception('Wrong arguments')
 
-    T = 4
-    # if it doens't get better for more than 10 iterations, increase alpha to allow bigger changes
-    # Increase alpha then set unev_runs back to 0
-    if unev_runs > 30:
-        print("Augmenting alpha")
-        alpha += alpha_0
-        unev_runs = 0
+    @staticmethod
+    def get_fitness_map(fitness_values):
+        fitmap = []
+        total = 0
+        for f in fitness_values:
+            total = total + f
+            fitmap.append(total)
+        return fitmap
 
-    unev_runs += 1
-    print("Run {}/{}".format(run, runs))
-    observation = env.reset()
+    def select_parent(self, fitmap):
+        r = np.random.rand()  # 0-1
+        r = r * fitmap[-1]
+        for i in range(len(fitmap)):
+            if r <= fitmap[i]:
+                return self.walking_strategies[i]
 
-    # I copy the best performing w and I try to evolve it
-    w_try = copy.deepcopy(w_best)
-    evolve(w_try)
+        return self.walking_strategies[len(fitmap) - 1]
 
-    total_reward = 0.0
-    for i in range(500):
-        # make a step given by the controller and record the state and the reward
-        i *= 0.01  # Every step is 0.01 s
-        if i > 2:
-            T = 2
-            i -= 2
-            observation, reward, done, info = env.step(generate_input(w_try, i))
-        else:
-            # make a step given by the controller and record the state and the reward
 
-            observation, reward, done, info = env.step(generate_input(w_first, i))
-        total_reward += reward
-        if done:
-            print("done")
+# testing
+# walking_strategy = WalkingStrategy(100)
+# env = L2M2019Env(visualize=True)
+# env.reset()
+# for i in range(1000):
+#     env.step(walking_strategy.calculate_muscle_activations(i))
+
+iterations = 200
+sim_steps_per_iteration = 1000
+
+env = L2M2019Env(visualize=False, difficulty=0)
+
+population = WalkingStrategyPopulation(size=10)
+
+for iteration in range(iterations):
+    print(f'Iteration: {iteration + 1}/{iterations}')
+
+    # # if it doens't get better for more than 10 iterations, increase alpha to allow bigger changes
+    # # Increase alpha then set unev_runs back to 0
+    # if unev_runs > 30:
+    #     print("Augmenting alpha")
+    #     alpha += alpha_0
+    #     unev_runs = 0
+
+    env.reset()
+
+    fitness_values = np.array([0 for _ in range(len(population.walking_strategies))])
+
+    # eval population
+    for i, walking_strategy in enumerate(population.walking_strategies):
+        for sim_step in range(sim_steps_per_iteration):
+            observation, reward, done, info = env.step(walking_strategy.calculate_muscle_activations(sim_step))
+            fitness_values[i] += reward
+            if done:
+                break
+
+    # give a birth to a new population
+    fit_map = population.get_fitness_map(fitness_values)
+    new_walking_strategies = []
+    for _ in range(len(population.walking_strategies)):
+        parent1 = population.select_parent(fit_map)
+        parent2 = population.select_parent(fit_map)
+        new_walking_strategy = crossover(parent1, parent2)
+
+        new_walking_strategy = mutate(new_walking_strategy)
+
+        new_walking_strategies.append(new_walking_strategy)
+
+    # preserve elites
+    max_fits = -np.partition(-fitness_values, 2)[:2]
+    elites_saved = 0
+    for i, walking_strategy in enumerate(population.walking_strategies):
+        if fitness_values[i] in max_fits:
+            new_walking_strategies[elites_saved] = walking_strategy
+            elites_saved += 1
+
+        if elites_saved == 2:
             break
 
-    if total_reward > best_reward:
-        # If the total reward is the best one, I store w_try as w_best, dump it with pickle and save the reward
-        print("Found a better one!")
-        unev_runs = 0
-        alpha = alpha_0
-        w_best = copy.deepcopy(w_try)
-        print(w_best)
+    population = WalkingStrategyPopulation(walking_strategies=new_walking_strategies)
 
-        fileObject = open(file_Name, 'wb')
-        # pickle.dump(w_best,fileObject)
-        fileObject.close()
-        best_reward = total_reward
+# save the best
+# working with pickle
+# fileObject = open(file_Name, 'r')
+# w_best = pickle.load(fileObject)
+# pickle.dump(w_best,fileObject)
 
-    # Your reward is
-    print("Total reward %f" % total_reward)
-
-# Final run with video and best weights. The raw_input waits for the user to type something. (if it's afk)
-print("Run with best weights")
-_ = input("ready? ")
-env = L2M2019Env(visualize=True)
-observation = env.reset()
-
-T = 4
-total_reward = 0.0
-for i in range(500):
-    # make a step given by the controller and record the state and the reward
-    i *= 0.01  # Every step is 0.01 s
-
-    if i > 2:
-        i -= 2
-        T = 2
-        observation, reward, done, info = env.step(generate_input(w_best, i))
-    else:
-        # make a step given by the controller and record the state and the reward
-
-        observation, reward, done, info = env.step(generate_input(w_first, i))
-    total_reward += reward
-    if done:
-        print("done")
-        break
-
-# Your reward is
-print("Total reward %f" % total_reward)
-
-print("best weights")
-print(w_best)
+# visualize the best
+# fileObject = open(file_Name, 'r')
+# w_best = pickle.load(fileObject)
+# pickle.dump(w_best,fileObject)
