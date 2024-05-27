@@ -5,6 +5,8 @@ import pickle
 import random
 from walking_strategy import WalkingStrategy
 
+from concurrent.futures import ProcessPoolExecutor
+
 def crossover(walking_strategy_1, walking_strategy_2):
     switch_index = random.randint(0, 220)
 
@@ -22,29 +24,7 @@ def crossover(walking_strategy_1, walking_strategy_2):
 
     new_muscle_activations_fourier_coefficients = np.array_split(np.concatenate((fourier_1[:switch_index], fourier_2[switch_index:])), 22)
 
-    return WalkingStrategy(100, new_muscle_activations_fourier_coefficients)
-
-
-def mutate(walking_strategy):
-    #TODO: add dynamic mutation factor when there are no improvement for a long time
-
-    new_muscle_activations_fourier_coefficients = copy.deepcopy(walking_strategy.muscle_activations_fourier_coefficients)
-
-    for i in range(10):
-        for j in range(new_muscle_activations_fourier_coefficients[i].shape[0]):
-            if random.random() < 0.05:
-                new_muscle_activations_fourier_coefficients[i][j] += np.random.randn()
-
-    """
-    for i in range(9):
-        delta=[]
-        for j in range(4):
-            delta.append(np.random.randn()*0.5/((j+1)**2))
-        delta=np.asarray(delta)
-        w[i]+=delta
-    """
-
-    return WalkingStrategy(100, new_muscle_activations_fourier_coefficients)
+    return WalkingStrategy(400, new_muscle_activations_fourier_coefficients)
 
 class WalkingStrategyPopulation:
     def __init__(self, **kwargs):
@@ -55,7 +35,7 @@ class WalkingStrategyPopulation:
 
         size = kwargs.get('size')
         if size is not None:
-            self.walking_strategies = [WalkingStrategy(100) for _ in range(size)]
+            self.walking_strategies = [WalkingStrategy(400) for _ in range(size)]
             return
 
         raise Exception('Wrong arguments')
@@ -78,74 +58,106 @@ class WalkingStrategyPopulation:
 
         return self.walking_strategies[len(fitmap) - 1]
 
-
-# testing
-# walking_strategy = WalkingStrategy(100)
-# env = L2M2019Env(visualize=True)
-# env.reset()
-# for i in range(1000):
-#     env.step(walking_strategy.calculate_muscle_activations(i))
-
-iterations = 15000
+iterations = 5000
 sim_steps_per_iteration = 1000
-
-env = L2M2019Env(visualize=False, difficulty=0)
 
 population = WalkingStrategyPopulation(size=10)
 
-for iteration in range(iterations):
-    print(f'Iteration: {iteration + 1}/{iterations}')
+envs = [L2M2019Env(visualize=False, difficulty=0) for _ in range(len(population.walking_strategies))]
 
-    env.reset()
+def evaluate(i, walking_strategy):
+    global envs
+    envs[i].reset()
+    total_reward = 0
+    for sim_step in range(sim_steps_per_iteration):
+        observation, reward, done, info = envs[i].step(walking_strategy.calculate_muscle_activations(sim_step))
+        total_reward += reward
+        if done:
+            break
+    return total_reward
 
-    fitness_values = np.array([0 for _ in range(len(population.walking_strategies))])
 
-    # eval population
-    for i, walking_strategy in enumerate(population.walking_strategies):
-        for sim_step in range(sim_steps_per_iteration):
-            observation, reward, done, info = env.step(walking_strategy.calculate_muscle_activations(sim_step))
-            fitness_values[i] += reward
-            if done:
+if __name__ == "__main__":
+
+    def mutate(walking_strategy, mut_coef):
+        new_muscle_activations_fourier_coefficients = copy.deepcopy(walking_strategy.muscle_activations_fourier_coefficients)
+
+        for i in range(10):
+            for j in range(new_muscle_activations_fourier_coefficients[i].shape[0]):
+                if random.random() < 0.05:
+                    new_muscle_activations_fourier_coefficients[i][j] += mut_coef * np.random.randn()
+
+        return WalkingStrategy(400, new_muscle_activations_fourier_coefficients)
+
+    executor = ProcessPoolExecutor(max_workers=len(population.walking_strategies))
+
+    mutation_coefficient = 0.1
+    total_best_fitness_value = 0
+    current_best_fitness_value = 0
+    iterations_with_fitness_improvement = 0
+    iterations_without_fitness_improvement = 0
+
+    for iteration in range(iterations):
+        print(f'Last fitness: {current_best_fitness_value}, Best fitness: {total_best_fitness_value}')
+        print(f'Iteration: {iteration + 1}/{iterations}')
+
+        # eval population
+
+        futures = [executor.submit(evaluate, i, walking_strategy) for i, walking_strategy in enumerate(population.walking_strategies)]
+        fitness_values = np.array([future.result() for future in futures])
+
+        current_best_fitness_value = fitness_values.max()
+        if current_best_fitness_value > total_best_fitness_value:
+            total_best_fitness_value = current_best_fitness_value
+            iterations_without_fitness_improvement = 0
+            iterations_with_fitness_improvement += 1
+        else:
+            iterations_with_fitness_improvement = 0
+            iterations_without_fitness_improvement += 1
+        if iterations_without_fitness_improvement > 10:
+            mutation_coefficient += 0.1
+        elif iterations_with_fitness_improvement > 10:
+            mutation_coefficient -= 0.1
+        if mutation_coefficient > 2:
+            mutation_coefficient = 2
+        if mutation_coefficient < 0.1:
+            mutation_coefficient = 0.1
+
+
+        # futures = [evaluate(i, walking_strategy) for i, walking_strategy in enumerate(population.walking_strategies)]
+        # fitness_values = np.array(futures)
+
+
+        # give a birth to a new population
+        fit_map = population.get_fitness_map(fitness_values)
+        new_walking_strategies = []
+        for _ in range(len(population.walking_strategies)):
+            parent1 = population.select_parent(fit_map)
+            parent2 = population.select_parent(fit_map)
+            new_walking_strategy = crossover(parent1, parent2)
+
+            new_walking_strategy = mutate(new_walking_strategy, mutation_coefficient)
+
+            new_walking_strategy.normalize()
+
+            new_walking_strategies.append(new_walking_strategy)
+
+        # preserve elites
+        max_fits = -np.partition(-fitness_values, 2)[:2]
+        elites_saved = 0
+        for i, walking_strategy in enumerate(population.walking_strategies):
+            if fitness_values[i] in max_fits:
+                new_walking_strategies[elites_saved] = walking_strategy
+                elites_saved += 1
+
+            if elites_saved == 2:
                 break
 
-    # give a birth to a new population
-    fit_map = population.get_fitness_map(fitness_values)
-    new_walking_strategies = []
-    for _ in range(len(population.walking_strategies)):
-        parent1 = population.select_parent(fit_map)
-        parent2 = population.select_parent(fit_map)
-        new_walking_strategy = crossover(parent1, parent2)
+        population = WalkingStrategyPopulation(walking_strategies=new_walking_strategies)
 
-        new_walking_strategy = mutate(new_walking_strategy)
 
-        new_walking_strategy.normalize()
+    executor.shutdown()
 
-        new_walking_strategies.append(new_walking_strategy)
-
-    # preserve elites
-    max_fits = -np.partition(-fitness_values, 2)[:2]
-    elites_saved = 0
-    for i, walking_strategy in enumerate(population.walking_strategies):
-        if fitness_values[i] in max_fits:
-            new_walking_strategies[elites_saved] = walking_strategy
-            elites_saved += 1
-
-        if elites_saved == 2:
-            break
-
-    population = WalkingStrategyPopulation(walking_strategies=new_walking_strategies)
-
-# save the best
-with open('best', 'wb') as file:
-    pickle.dump(population.walking_strategies[0], file)
-
-# visualize the best
-with open('best', 'rb') as file:
-    best_walking_strategy = pickle.load(file)
-
-env = L2M2019Env(visualize=True, difficulty=0)
-env.reset()
-for sim_step in range(sim_steps_per_iteration):
-    observation, reward, done, info = env.step(best_walking_strategy.calculate_muscle_activations(sim_step))
-    if done:
-        break
+    # save the best
+    with open('best', 'wb') as file:
+        pickle.dump(population.walking_strategies[0], file)
