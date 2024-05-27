@@ -2,57 +2,39 @@ from osim.env import L2M2019Env
 import numpy as np
 import copy
 import pickle
-
-# TODO: we should exploit the Fourier property for which higher harmonics weights tend to decays as 1/x^n for smooth and continous functions
-
-class WalkingStrategy:
-    def __init__(self, period):
-        self.muscle_activations_fourier_coefficients = [WalkingStrategy.generate_single_muscle_activation() for _ in range(22)]
-        self.period = period
-
-    @staticmethod
-    def generate_single_muscle_activation():
-        result = []
-
-        a0 = np.random.uniform(-10, 10)
-        result.append(a0)
-
-        current_sum = a0
-        current_negative_sum = a0
-
-        for _ in range(9):
-            coefficient = np.random.uniform(-10, min(1 - current_sum, current_negative_sum))
-
-            result.append(coefficient)
-
-            current_sum += coefficient
-            current_negative_sum -= coefficient
-
-        return result
-
-    def calculate_muscle_activations(self, time):
-        return [self.calculate_fourier_series_sum(coefficients, time) for coefficients in self.muscle_activations_fourier_coefficients]
-
-    def calculate_fourier_series_sum(self, coefficients, time):
-        a0 = coefficients[0]
-        result = a0
-
-        for i in range(1, len(coefficients), 3):
-            an = coefficients[i]
-            bn = coefficients[i + 1]
-            phase = coefficients[i + 2]
-            result += an * np.cos((i // 3 + 1) * 2 * np.pi * time / self.period + phase) + bn * np.cos(
-                (i // 3 + 1) * 2 * np.pi * time / self.period + phase)
-
-        return result
+import random
+from walking_strategy import WalkingStrategy
 
 def crossover(walking_strategy_1, walking_strategy_2):
-    return walking_strategy_1
+    switch_index = random.randint(0, 220)
+
+    fourier_1 = [
+        v
+        for muscle in walking_strategy_1.muscle_activations_fourier_coefficients
+        for v in muscle
+    ]
+
+    fourier_2 = [
+        v
+        for muscle in walking_strategy_2.muscle_activations_fourier_coefficients
+        for v in muscle
+    ]
+
+    new_muscle_activations_fourier_coefficients = np.array_split(np.concatenate((fourier_1[:switch_index], fourier_2[switch_index:])), 22)
+
+    return WalkingStrategy(100, new_muscle_activations_fourier_coefficients)
 
 
 def mutate(walking_strategy):
-    for i in range(9):
-        w[i] += np.random.randn(8) * alpha
+    #TODO: add dynamic mutation factor when there are no improvement for a long time
+
+    new_muscle_activations_fourier_coefficients = copy.deepcopy(walking_strategy.muscle_activations_fourier_coefficients)
+
+    for i in range(10):
+        for j in range(new_muscle_activations_fourier_coefficients[i].shape[0]):
+            if random.random() < 0.05:
+                new_muscle_activations_fourier_coefficients[i][j] += np.random.randn()
+
     """
     for i in range(9):
         delta=[]
@@ -62,7 +44,7 @@ def mutate(walking_strategy):
         w[i]+=delta
     """
 
-    return walking_strategy
+    return WalkingStrategy(100, new_muscle_activations_fourier_coefficients)
 
 class WalkingStrategyPopulation:
     def __init__(self, **kwargs):
@@ -104,7 +86,7 @@ class WalkingStrategyPopulation:
 # for i in range(1000):
 #     env.step(walking_strategy.calculate_muscle_activations(i))
 
-iterations = 200
+iterations = 15000
 sim_steps_per_iteration = 1000
 
 env = L2M2019Env(visualize=False, difficulty=0)
@@ -113,13 +95,6 @@ population = WalkingStrategyPopulation(size=10)
 
 for iteration in range(iterations):
     print(f'Iteration: {iteration + 1}/{iterations}')
-
-    # # if it doens't get better for more than 10 iterations, increase alpha to allow bigger changes
-    # # Increase alpha then set unev_runs back to 0
-    # if unev_runs > 30:
-    #     print("Augmenting alpha")
-    #     alpha += alpha_0
-    #     unev_runs = 0
 
     env.reset()
 
@@ -143,6 +118,8 @@ for iteration in range(iterations):
 
         new_walking_strategy = mutate(new_walking_strategy)
 
+        new_walking_strategy.normalize()
+
         new_walking_strategies.append(new_walking_strategy)
 
     # preserve elites
@@ -159,12 +136,16 @@ for iteration in range(iterations):
     population = WalkingStrategyPopulation(walking_strategies=new_walking_strategies)
 
 # save the best
-# working with pickle
-# fileObject = open(file_Name, 'r')
-# w_best = pickle.load(fileObject)
-# pickle.dump(w_best,fileObject)
+with open('best', 'wb') as file:
+    pickle.dump(population.walking_strategies[0], file)
 
 # visualize the best
-# fileObject = open(file_Name, 'r')
-# w_best = pickle.load(fileObject)
-# pickle.dump(w_best,fileObject)
+with open('best', 'rb') as file:
+    best_walking_strategy = pickle.load(file)
+
+env = L2M2019Env(visualize=True, difficulty=0)
+env.reset()
+for sim_step in range(sim_steps_per_iteration):
+    observation, reward, done, info = env.step(best_walking_strategy.calculate_muscle_activations(sim_step))
+    if done:
+        break
