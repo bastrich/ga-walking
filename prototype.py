@@ -7,6 +7,10 @@ from walking_strategy import WalkingStrategy
 
 from concurrent.futures import ProcessPoolExecutor
 
+#increase crossover points dynamically
+#increase mutation probabvilitydynamixcally
+#сдлееать разлдтчте по фазам просто
+
 def crossover(walking_strategy_1, walking_strategy_2):
     switch_index = random.randint(0, 220)
 
@@ -57,6 +61,7 @@ class WalkingStrategyPopulation:
                 return self.walking_strategies[i]
 
         return self.walking_strategies[len(fitmap) - 1]
+
 
 iterations = 5000
 sim_steps_per_iteration = 1000
