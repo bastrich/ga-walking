@@ -3,7 +3,7 @@ import pickle
 from walking_strategy import WalkingStrategy
 
 # visualize the best
-with open('best', 'rb') as file:
+with open('best-0', 'rb') as file:
     best_walking_strategy = pickle.load(file)
 
 env = L2M2019Env(visualize=True, difficulty=0)

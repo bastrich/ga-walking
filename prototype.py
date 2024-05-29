@@ -9,12 +9,10 @@ from concurrent.futures import ProcessPoolExecutor
 
 import time
 
-#add mutatuin null or 1
-
 period = 400
 
-def crossover(walking_strategy_1, walking_strategy_2, num_of_switch_points):
-    switch_indexes = np.random.randint(1, 175, num_of_switch_points)
+def crossover(walking_strategy_1, walking_strategy_2):
+    switch_indexes = np.random.randint(1, 175, np.random.randint(1, 5))
     switch = True
     new_muscle_activations_fourier_coefficients = []
 
@@ -85,23 +83,27 @@ def evaluate(i, walking_strategy):
 
 if __name__ == "__main__":
 
-    def mutate(walking_strategy, mut_rate, mut_coef):
+    def mutate(walking_strategy, shrink_growth_rate, mutation_rate, mutation_coefficient):
         new_muscle_activations_fourier_coefficients = copy.deepcopy(walking_strategy.muscle_activations_fourier_coefficients)
 
         for i in range(11):
             for j in range(16):
-                if random.random() < mut_rate:
-                    new_muscle_activations_fourier_coefficients[i][j] = new_muscle_activations_fourier_coefficients[i][j] + random.choice([1, -1]) * mut_coef * new_muscle_activations_fourier_coefficients[i][j]
+                if random.random() < shrink_growth_rate:
+                    new_muscle_activations_fourier_coefficients[i][j] = random.choice([0, 1])
+                elif random.random() < mutation_rate:
+                    new_muscle_activations_fourier_coefficients[i][j] += mutation_coefficient * np.random.normal()
 
         return WalkingStrategy(period, new_muscle_activations_fourier_coefficients)
 
     executor = ProcessPoolExecutor(max_workers=len(population.walking_strategies))
 
-    mutation_rate = 0.05
-    mutation_coefficient = 0.05
-    num_of_crossover_points = 1
+    shrink_growth_rate = 0.01
+    mutation_rate = 0.01
+    mutation_coefficient = 0.01
+
     total_best_fitness_value = 0
     current_best_fitness_value = 0
+
     iterations_with_fitness_improvement = 0
     iterations_without_fitness_improvement = 0
 
@@ -127,20 +129,19 @@ if __name__ == "__main__":
 
         if iterations_without_fitness_improvement > 5:
             print('5 generations without improvement, increasing mutation rate')
-            mutation_rate += 0.02
-            mutation_coefficient += 0.02
-            num_of_crossover_points += 1
+            shrink_growth_rate += 0.01
+            mutation_rate += 0.01
+            mutation_coefficient += 0.01
             iterations_without_fitness_improvement = 0
         elif iterations_with_fitness_improvement > 0:
             print('1 generation with improvement, decreasing mutation rate')
-            mutation_rate -= 0.05
-            mutation_coefficient -= 0.02
-            num_of_crossover_points -= 1
+            shrink_growth_rate -= 0.01
+            mutation_rate -= 0.01
+            mutation_coefficient -= 0.01
 
-        mutation_coefficient = np.clip(mutation_coefficient, 0.05, 0.5)
-        mutation_rate = np.clip(mutation_rate, 0.05, 0.5)
-        num_of_crossover_points = np.clip(num_of_crossover_points, 1, 4)
-
+        shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.2)
+        mutation_rate = np.clip(mutation_rate, 0.01, 0.5)
+        mutation_coefficient = np.clip(mutation_coefficient, 0.01, 4)
 
         # give a birth to a new population
         fit_map = population.get_fitness_map(fitness_values)
@@ -148,18 +149,21 @@ if __name__ == "__main__":
         for _ in range(len(population.walking_strategies)):
             parent1 = population.select_parent(fit_map)
             parent2 = population.select_parent(fit_map)
-            new_walking_strategy = crossover(parent1, parent2, num_of_crossover_points)
+            new_walking_strategy = crossover(parent1, parent2)
 
-            new_walking_strategy = mutate(new_walking_strategy, mutation_rate, mutation_coefficient)
+            new_walking_strategy = mutate(new_walking_strategy, shrink_growth_rate, mutation_rate, mutation_coefficient)
 
             new_walking_strategies.append(new_walking_strategy)
 
         # preserve elites
-        max_fits = -np.partition(-fitness_values, 2)[:2]
+        max_fits = -np.partition(-fitness_values, 1)[:1]
         elites_saved = 0
         for i, walking_strategy in enumerate(population.walking_strategies):
             if fitness_values[i] in max_fits:
                 new_walking_strategies[elites_saved] = walking_strategy
+                # save the best
+                with open(f'best-{elites_saved}', 'wb') as file:
+                    pickle.dump(walking_strategy, file)
                 elites_saved += 1
 
             if elites_saved == 1:
@@ -173,6 +177,3 @@ if __name__ == "__main__":
 
     executor.shutdown()
 
-    # save the best
-    with open('best', 'wb') as file:
-        pickle.dump(population.walking_strategies[0], file)
