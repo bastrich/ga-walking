@@ -2,79 +2,66 @@ import numpy as np
 
 class WalkingStrategy:
     def __init__(self, period, muscle_activations_fourier_coefficients=None):
-
         self.period = period
+
         if muscle_activations_fourier_coefficients is None:
-            self.muscle_activations_fourier_coefficients = [WalkingStrategy.generate_single_muscle_activation() for _ in range(22)]
+            self.muscle_activations_fourier_coefficients = [WalkingStrategy.generate_single_muscle_activation_fourier_coefficients() for _ in range(11)]
         else:
             self.muscle_activations_fourier_coefficients = muscle_activations_fourier_coefficients
 
+        self.muscle_activations_cache = np.vstack([self.normalize(self.calculate_fourier_series_sums_1(coefficients)) for coefficients in self.muscle_activations_fourier_coefficients] +
+         [self.normalize(self.calculate_fourier_series_sums_2(coefficients)) for coefficients in self.muscle_activations_fourier_coefficients]).transpose()
+
+    def normalize(self, muscle_activations):
+        min_value = np.min(muscle_activations)
+        max_value = np.max(muscle_activations)
+
+        if min_value == max_value:
+            return muscle_activations
+
+        return (muscle_activations - min_value) / (max_value - min_value)
+
+    def calculate_fourier_series_sums_1(self, single_muscle_coefficients):
+        return np.array([self.calculate_fourier_series_sum(single_muscle_coefficients, i) for i in range(self.period)])
+
+    def calculate_fourier_series_sums_2(self, single_muscle_coefficients):
+        return np.array([self.calculate_fourier_series_sum(single_muscle_coefficients, i + self.period / 2) for i in range(self.period)])
+
     @staticmethod
-    def generate_single_muscle_activation():
-        result = []
-
-        a0 = np.random.uniform(0, 1)
-        result.append(a0)
-
-        current_sum = 0
-
-        coefficients = []
-        for _ in range(6):
-            coefficient = np.random.uniform(0, 0.5 - current_sum)
-
-            coefficients.append(coefficient)
-
-            current_sum += np.abs(coefficient)
-
-        return [
-            a0,
-            coefficients[0],
-            coefficients[1],
-            np.random.uniform(-np.pi / 2, np.pi / 2),
-            coefficients[2],
-            coefficients[3],
-            np.random.uniform(-np.pi / 2, np.pi / 2),
-            coefficients[4],
-            coefficients[5],
-            np.random.uniform(-np.pi / 2, np.pi / 2),
+    def generate_single_muscle_activation_fourier_coefficients():
+        a = [
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1)
+        ]
+        b = [
+            0,
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1),
+            np.random.uniform(-1, 1)
+        ]
+        phases = [
+            np.random.uniform(-np.pi, np.pi),
+            np.random.uniform(-np.pi, np.pi),
+            np.random.uniform(-np.pi, np.pi),
+            np.random.uniform(-np.pi, np.pi),
+            np.random.uniform(-np.pi, np.pi)
         ]
 
-    def calculate_muscle_activations(self, time):
-        return [self.calculate_fourier_series_sum(coefficients, time) for coefficients in self.muscle_activations_fourier_coefficients]
+        return [a[0], a[1], b[1], phases[0], a[2], b[2], phases[1], a[3], b[3], phases[2], a[4], b[4], phases[3], a[5], b[5], phases[4]]
+
+    def get_muscle_activations(self, time):
+        return self.muscle_activations_cache[time % self.period]
 
     def calculate_fourier_series_sum(self, coefficients, time):
-        a0 = coefficients[0]
-        result = a0
-
-        for i in range(1, len(coefficients), 3):
-            an = coefficients[i]
-            bn = coefficients[i + 1]
-            phase = coefficients[i + 2]
-            result += an * np.cos((i // 3 + 1) * 2 * np.pi * time / self.period + phase) + bn * np.sin(
-                (i // 3 + 1) * 2 * np.pi * time / self.period + phase)
-
-        return result
-
-    def normalize(self):
-        for muscle in self.muscle_activations_fourier_coefficients:
-            if muscle[0] < 0:
-                muscle[0] = 0
-            elif muscle[0] > 1:
-                muscle[0] = 1
-
-            sum = np.abs(muscle[1]) + np.abs(muscle[2]) + np.abs(muscle[4]) + np.abs(muscle[5]) + np.abs(muscle[7]) + np.abs(muscle[8])
-
-            if sum > 1/2:
-                current_sum = 0
-                for j in range(1, 10, 3):
-                    limit = 0.5 - current_sum
-                    if muscle[j] > limit:
-                        muscle[j] -= (muscle[j] - limit)
-                        break
-                    current_sum += np.abs(muscle[j])
-
-                    limit = 0.5 - current_sum
-                    if muscle[j+1] > limit:
-                        muscle[j+1] -= (muscle[j+1] - limit)
-                        break
-                    current_sum += np.abs(muscle[j+1])
+        return (coefficients[0] +
+                coefficients[1] * np.cos(2 * np.pi * time / self.period + coefficients[3]) + coefficients[2] * np.sin(2 * np.pi * time / self.period + coefficients[3]) +
+                coefficients[4] * np.cos(2 * 2 * np.pi * time / self.period + coefficients[6]) + coefficients[5] * np.sin(2 * 2 * np.pi * time / self.period + coefficients[6]) +
+                coefficients[7] * np.cos(2 * 2 * np.pi * time / self.period + coefficients[9]) + coefficients[8] * np.sin(3 * 2 * np.pi * time / self.period + coefficients[9]) +
+                coefficients[10] * np.cos(3 * 2 * np.pi * time / self.period + coefficients[12]) + coefficients[11] * np.sin(4 * 2 * np.pi * time / self.period + coefficients[12]) +
+                coefficients[13] * np.cos(4 * 2 * np.pi * time / self.period + coefficients[15]) + coefficients[14] * np.sin(5 * 2 * np.pi * time / self.period + coefficients[15]))

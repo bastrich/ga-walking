@@ -12,8 +12,33 @@ env.reset()
 total_reward = 0
 
 for sim_step in range(10000):
-    observation, reward, done, info = env.step(best_walking_strategy.calculate_muscle_activations(sim_step))
+    observation, reward, done, info = env.step(best_walking_strategy.get_muscle_activations(sim_step))
     # observation, reward, done, info = env.step(env.action_space.sample())
+
+    # observation, reward, done, info = env.step([
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     1,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     0,
+    #     1
+    # ])
     total_reward += reward
-    if done:
-        break
+    # if done:
+    #     break

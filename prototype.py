@@ -7,28 +7,29 @@ from walking_strategy import WalkingStrategy
 
 from concurrent.futures import ProcessPoolExecutor
 
-#increase crossover points dynamically
-#increase mutation probabvilitydynamixcally
-#сдлееать разлдтчте по фазам просто
+import time
 
-def crossover(walking_strategy_1, walking_strategy_2):
-    switch_index = random.randint(0, 220)
+#add mutatuin null or 1
 
-    fourier_1 = [
-        v
-        for muscle in walking_strategy_1.muscle_activations_fourier_coefficients
-        for v in muscle
-    ]
+period = 400
 
-    fourier_2 = [
-        v
-        for muscle in walking_strategy_2.muscle_activations_fourier_coefficients
-        for v in muscle
-    ]
+def crossover(walking_strategy_1, walking_strategy_2, num_of_switch_points):
+    switch_indexes = np.random.randint(1, 175, num_of_switch_points)
+    switch = True
+    new_muscle_activations_fourier_coefficients = []
 
-    new_muscle_activations_fourier_coefficients = np.array_split(np.concatenate((fourier_1[:switch_index], fourier_2[switch_index:])), 22)
+    for i in range(176):
+        if i in switch_indexes:
+            switch = not switch
+        if switch is True:
+            new_muscle_activations_fourier_coefficients.append(walking_strategy_1.muscle_activations_fourier_coefficients[i // 16][i % 16])
+        else:
+            new_muscle_activations_fourier_coefficients.append(walking_strategy_2.muscle_activations_fourier_coefficients[i // 16][i % 16])
 
-    return WalkingStrategy(400, new_muscle_activations_fourier_coefficients)
+    new_muscle_activations_fourier_coefficients = np.array_split(new_muscle_activations_fourier_coefficients, 11)
+
+    return WalkingStrategy(period, new_muscle_activations_fourier_coefficients)
+
 
 class WalkingStrategyPopulation:
     def __init__(self, **kwargs):
@@ -39,7 +40,7 @@ class WalkingStrategyPopulation:
 
         size = kwargs.get('size')
         if size is not None:
-            self.walking_strategies = [WalkingStrategy(400) for _ in range(size)]
+            self.walking_strategies = [WalkingStrategy(period) for _ in range(size)]
             return
 
         raise Exception('Wrong arguments')
@@ -63,10 +64,10 @@ class WalkingStrategyPopulation:
         return self.walking_strategies[len(fitmap) - 1]
 
 
-iterations = 5000
+iterations = 10000
 sim_steps_per_iteration = 1000
 
-population = WalkingStrategyPopulation(size=10)
+population = WalkingStrategyPopulation(size=15)
 
 envs = [L2M2019Env(visualize=False, difficulty=0) for _ in range(len(population.walking_strategies))]
 
@@ -75,7 +76,7 @@ def evaluate(i, walking_strategy):
     envs[i].reset()
     total_reward = 0
     for sim_step in range(sim_steps_per_iteration):
-        observation, reward, done, info = envs[i].step(walking_strategy.calculate_muscle_activations(sim_step))
+        observation, reward, done, info = envs[i].step(walking_strategy.get_muscle_activations(sim_step))
         total_reward += reward
         if done:
             break
@@ -84,23 +85,27 @@ def evaluate(i, walking_strategy):
 
 if __name__ == "__main__":
 
-    def mutate(walking_strategy, mut_coef):
+    def mutate(walking_strategy, mut_rate, mut_coef):
         new_muscle_activations_fourier_coefficients = copy.deepcopy(walking_strategy.muscle_activations_fourier_coefficients)
 
-        for i in range(10):
-            for j in range(new_muscle_activations_fourier_coefficients[i].shape[0]):
-                if random.random() < 0.05:
-                    new_muscle_activations_fourier_coefficients[i][j] += mut_coef * np.random.randn()
+        for i in range(11):
+            for j in range(16):
+                if random.random() < mut_rate:
+                    new_muscle_activations_fourier_coefficients[i][j] = new_muscle_activations_fourier_coefficients[i][j] + random.choice([1, -1]) * mut_coef * new_muscle_activations_fourier_coefficients[i][j]
 
-        return WalkingStrategy(400, new_muscle_activations_fourier_coefficients)
+        return WalkingStrategy(period, new_muscle_activations_fourier_coefficients)
 
     executor = ProcessPoolExecutor(max_workers=len(population.walking_strategies))
 
-    mutation_coefficient = 0.1
+    mutation_rate = 0.05
+    mutation_coefficient = 0.05
+    num_of_crossover_points = 1
     total_best_fitness_value = 0
     current_best_fitness_value = 0
     iterations_with_fitness_improvement = 0
     iterations_without_fitness_improvement = 0
+
+    start_time = time.time()
 
     for iteration in range(iterations):
         print(f'Last fitness: {current_best_fitness_value}, Best fitness: {total_best_fitness_value}')
@@ -119,18 +124,22 @@ if __name__ == "__main__":
         else:
             iterations_with_fitness_improvement = 0
             iterations_without_fitness_improvement += 1
-        if iterations_without_fitness_improvement > 10:
-            mutation_coefficient += 0.1
-        elif iterations_with_fitness_improvement > 10:
-            mutation_coefficient -= 0.1
-        if mutation_coefficient > 2:
-            mutation_coefficient = 2
-        if mutation_coefficient < 0.1:
-            mutation_coefficient = 0.1
 
+        if iterations_without_fitness_improvement > 5:
+            print('5 generations without improvement, increasing mutation rate')
+            mutation_rate += 0.02
+            mutation_coefficient += 0.02
+            num_of_crossover_points += 1
+            iterations_without_fitness_improvement = 0
+        elif iterations_with_fitness_improvement > 0:
+            print('1 generation with improvement, decreasing mutation rate')
+            mutation_rate -= 0.05
+            mutation_coefficient -= 0.02
+            num_of_crossover_points -= 1
 
-        # futures = [evaluate(i, walking_strategy) for i, walking_strategy in enumerate(population.walking_strategies)]
-        # fitness_values = np.array(futures)
+        mutation_coefficient = np.clip(mutation_coefficient, 0.05, 0.5)
+        mutation_rate = np.clip(mutation_rate, 0.05, 0.5)
+        num_of_crossover_points = np.clip(num_of_crossover_points, 1, 4)
 
 
         # give a birth to a new population
@@ -139,11 +148,9 @@ if __name__ == "__main__":
         for _ in range(len(population.walking_strategies)):
             parent1 = population.select_parent(fit_map)
             parent2 = population.select_parent(fit_map)
-            new_walking_strategy = crossover(parent1, parent2)
+            new_walking_strategy = crossover(parent1, parent2, num_of_crossover_points)
 
-            new_walking_strategy = mutate(new_walking_strategy, mutation_coefficient)
-
-            new_walking_strategy.normalize()
+            new_walking_strategy = mutate(new_walking_strategy, mutation_rate, mutation_coefficient)
 
             new_walking_strategies.append(new_walking_strategy)
 
@@ -155,11 +162,14 @@ if __name__ == "__main__":
                 new_walking_strategies[elites_saved] = walking_strategy
                 elites_saved += 1
 
-            if elites_saved == 2:
+            if elites_saved == 1:
                 break
 
         population = WalkingStrategyPopulation(walking_strategies=new_walking_strategies)
 
+    end_time = time.time()
+
+    print(f'Execution time: {(end_time - start_time) / 60} minutes')
 
     executor.shutdown()
 
