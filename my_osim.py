@@ -751,7 +751,7 @@ class L2M2019Env(OsimEnv):
 
         self.d_reward['weight'] = {}
         self.d_reward['weight']['footstep'] = 10
-        self.d_reward['weight']['effort'] = 1
+        self.d_reward['weight']['effort'] = 100
         self.d_reward['weight']['v_tgt'] = 1
         self.d_reward['weight']['v_tgt_R2'] = 3
 
@@ -818,9 +818,9 @@ class L2M2019Env(OsimEnv):
             # reward_footstep_v = 20 * self.last_x
 
             # panalize effort
-            # reward_footstep_e = -self.d_reward['weight']['effort']*self.d_reward['footstep']['effort']
+            reward += -self.d_reward['weight']['effort']*self.d_reward['footstep']['effort']
 
-            reward += 20 * np.exp(self.delta_of_last_step)
+            reward += 40 * np.exp(self.delta_of_last_step)
 
             self.d_reward['footstep']['del_t'] = 0
             self.d_reward['footstep']['del_v'] = 0
