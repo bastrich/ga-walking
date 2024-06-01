@@ -804,6 +804,8 @@ class L2M2019Env(OsimEnv):
 
         self.d_reward['footstep']['del_v'] += (v_body - v_tgt)*dt
 
+        # add angle between head and pelvis
+
         # footstep reward (when made a new step)
         if self.footstep['new'] and self.delta_of_last_step >= 0:
             # footstep reward: so that solution does not avoid making footsteps

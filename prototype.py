@@ -58,7 +58,7 @@ if __name__ == "__main__":
         for i in range(11):
             for j in range(16):
                 if random.random() < shrink_growth_rate:
-                    new_muscle_activations_fourier_coefficients[i][j] = random.choice([0, 1])
+                    new_muscle_activations_fourier_coefficients[i][j] = random.choice([-1, 0, 1])
                 elif random.random() < mutation_rate:
                     new_muscle_activations_fourier_coefficients[i][j] += mutation_coefficient * np.random.normal()
 
@@ -101,17 +101,17 @@ if __name__ == "__main__":
             print('5 generations without improvement, increasing mutation rate')
             shrink_growth_rate += 0.01
             mutation_rate += 0.01
-            mutation_coefficient += 0.01
+            mutation_coefficient += 0.1
             iterations_without_fitness_improvement = 0
         elif iterations_with_fitness_improvement > 0:
             print('1 generation with improvement, decreasing mutation rate')
             shrink_growth_rate -= 0.01
             mutation_rate -= 0.01
-            mutation_coefficient -= 0.01
+            mutation_coefficient -= 0.1
 
         shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
         mutation_rate = np.clip(mutation_rate, 0.01, 0.5)
-        mutation_coefficient = np.clip(mutation_coefficient, 0.01, 10)
+        mutation_coefficient = np.clip(mutation_coefficient, 0.1, 10)
 
         # give a birth to a new population
         fit_map = population.get_fitness_map(fitness_values)
@@ -125,14 +125,14 @@ if __name__ == "__main__":
             new_walking_strategies.append(new_walking_strategy)
 
         # preserve elites
-        max_fits = -np.partition(-fitness_values, 1)[:1]
+        max_fits = -np.partition(-fitness_values, 5)[:5]
         elites_saved = 0
         for i, walking_strategy in enumerate(population.walking_strategies):
             if fitness_values[i] in max_fits:
                 new_walking_strategies[elites_saved] = walking_strategy
                 elites_saved += 1
 
-            if elites_saved == 1:
+            if elites_saved == 5:
                 break
 
         population = WalkingStrategyPopulation(period, walking_strategies=new_walking_strategies)
