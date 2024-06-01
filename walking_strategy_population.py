@@ -31,7 +31,7 @@ class WalkingStrategyPopulation:
         if parent1_index > 0:
             diff -= fitmap[parent1_index - 1]
 
-        r = np.random.rand()  # 0-1
+        r = np.random.uniform()  # 0-1
         r = r * (fitmap[-1] - diff)
 
         for i in range(len(fitmap)):

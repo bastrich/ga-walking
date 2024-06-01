@@ -804,7 +804,8 @@ class L2M2019Env(OsimEnv):
 
         self.d_reward['footstep']['del_v'] += (v_body - v_tgt)*dt
 
-        # add angle between head and pelvis
+        # add angle between head and pelvis!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # try to remove normalization
 
         # footstep reward (when made a new step)
         if self.footstep['new'] and self.delta_of_last_step >= 0:
@@ -822,7 +823,7 @@ class L2M2019Env(OsimEnv):
             # panalize effort
             reward += -self.d_reward['weight']['effort']*self.d_reward['footstep']['effort']
 
-            reward += 40 * np.exp(self.delta_of_last_step)
+            reward += 20 * np.exp(self.delta_of_last_step)
 
             self.d_reward['footstep']['del_t'] = 0
             self.d_reward['footstep']['del_v'] = 0

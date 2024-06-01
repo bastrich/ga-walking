@@ -30,27 +30,27 @@ class WalkingStrategy:
     @staticmethod
     def generate_single_muscle_activation_fourier_coefficients():
         a = [
-            np.random.uniform(-1, 1),
-            np.random.uniform(-1, 1),
-            np.random.uniform(-1, 1),
-            np.random.uniform(-1, 1),
-            np.random.uniform(-1, 1),
-            np.random.uniform(-1, 1)
+            np.random.randint(-100, 101),
+            np.random.randint(-100, 101),
+            np.random.randint(-100, 101),
+            np.random.randint(-100, 101),
+            np.random.randint(-100, 101),
+            np.random.randint(-100, 101)
         ]
         b = [
             0,
-            np.random.uniform(-1, 1),
-            np.random.uniform(-1, 1),
-            np.random.uniform(-1, 1),
-            np.random.uniform(-1, 1),
-            np.random.uniform(-1, 1)
+            np.random.randint(-100, 101),
+            np.random.randint(-100, 101),
+            np.random.randint(-100, 101),
+            np.random.randint(-100, 101),
+            np.random.randint(-100, 101)
         ]
         phases = [
-            np.random.uniform(-np.pi, np.pi),
-            np.random.uniform(-np.pi, np.pi),
-            np.random.uniform(-np.pi, np.pi),
-            np.random.uniform(-np.pi, np.pi),
-            np.random.uniform(-np.pi, np.pi)
+            np.random.randint(-314, 315),
+            np.random.randint(-314, 315),
+            np.random.randint(-314, 315),
+            np.random.randint(-314, 315),
+            np.random.randint(-314, 315)
         ]
 
         return [a[0], a[1], b[1], phases[0], a[2], b[2], phases[1], a[3], b[3], phases[2], a[4], b[4], phases[3], a[5], b[5], phases[4]]
@@ -59,9 +59,9 @@ class WalkingStrategy:
         return self.muscle_activations_cache[time % self.period]
 
     def calculate_fourier_series_sum(self, coefficients, time):
-        return (coefficients[0] +
-                coefficients[1] * np.cos(2 * np.pi * time / self.period + coefficients[3]) + coefficients[2] * np.sin(2 * np.pi * time / self.period + coefficients[3]) +
-                coefficients[4] * np.cos(2 * 2 * np.pi * time / self.period + coefficients[6]) + coefficients[5] * np.sin(2 * 2 * np.pi * time / self.period + coefficients[6]) +
-                coefficients[7] * np.cos(3 * 2 * np.pi * time / self.period + coefficients[9]) + coefficients[8] * np.sin(3 * 2 * np.pi * time / self.period + coefficients[9]) +
-                coefficients[10] * np.cos(4 * 2 * np.pi * time / self.period + coefficients[12]) + coefficients[11] * np.sin(4 * 2 * np.pi * time / self.period + coefficients[12]) +
-                coefficients[13] * np.cos(5 * 2 * np.pi * time / self.period + coefficients[15]) + coefficients[14] * np.sin(5 * 2 * np.pi * time / self.period + coefficients[15]))
+        return (coefficients[0] / 100 +
+                coefficients[1] / 100 * np.cos(2 * np.pi * time / self.period + coefficients[3] / 100) + coefficients[2] / 100 * np.sin(2 * np.pi * time / self.period + coefficients[3] / 100) +
+                coefficients[4] / 100 * np.cos(2 * 2 * np.pi * time / self.period + coefficients[6] / 100) + coefficients[5] / 100 * np.sin(2 * 2 * np.pi * time / self.period + coefficients[6] / 100) +
+                coefficients[7] / 100 * np.cos(3 * 2 * np.pi * time / self.period + coefficients[9] / 100) + coefficients[8] / 100 * np.sin(3 * 2 * np.pi * time / self.period + coefficients[9] / 100) +
+                coefficients[10] / 100 * np.cos(4 * 2 * np.pi * time / self.period + coefficients[12] / 100) + coefficients[11] / 100 * np.sin(4 * 2 * np.pi * time / self.period + coefficients[12] / 100) +
+                coefficients[13] / 100 * np.cos(5 * 2 * np.pi * time / self.period + coefficients[15] / 100) + coefficients[14] / 100 * np.sin(5 * 2 * np.pi * time / self.period + coefficients[15] / 100))
