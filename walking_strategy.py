@@ -62,6 +62,6 @@ class WalkingStrategy:
         return (coefficients[0] +
                 coefficients[1] * np.cos(2 * np.pi * time / self.period + coefficients[3]) + coefficients[2] * np.sin(2 * np.pi * time / self.period + coefficients[3]) +
                 coefficients[4] * np.cos(2 * 2 * np.pi * time / self.period + coefficients[6]) + coefficients[5] * np.sin(2 * 2 * np.pi * time / self.period + coefficients[6]) +
-                coefficients[7] * np.cos(2 * 2 * np.pi * time / self.period + coefficients[9]) + coefficients[8] * np.sin(3 * 2 * np.pi * time / self.period + coefficients[9]) +
-                coefficients[10] * np.cos(3 * 2 * np.pi * time / self.period + coefficients[12]) + coefficients[11] * np.sin(4 * 2 * np.pi * time / self.period + coefficients[12]) +
-                coefficients[13] * np.cos(4 * 2 * np.pi * time / self.period + coefficients[15]) + coefficients[14] * np.sin(5 * 2 * np.pi * time / self.period + coefficients[15]))
+                coefficients[7] * np.cos(3 * 2 * np.pi * time / self.period + coefficients[9]) + coefficients[8] * np.sin(3 * 2 * np.pi * time / self.period + coefficients[9]) +
+                coefficients[10] * np.cos(4 * 2 * np.pi * time / self.period + coefficients[12]) + coefficients[11] * np.sin(4 * 2 * np.pi * time / self.period + coefficients[12]) +
+                coefficients[13] * np.cos(5 * 2 * np.pi * time / self.period + coefficients[15]) + coefficients[14] * np.sin(5 * 2 * np.pi * time / self.period + coefficients[15]))

@@ -24,11 +24,29 @@ class WalkingStrategyPopulation:
             fitmap.append(total)
         return fitmap
 
+    def select_parents(self, fitmap):
+        parent1_index = self.select_parent(fitmap)
+
+        diff = fitmap[parent1_index]
+        if parent1_index > 0:
+            diff -= fitmap[parent1_index - 1]
+
+        r = np.random.rand()  # 0-1
+        r = r * (fitmap[-1] - diff)
+
+        for i in range(len(fitmap)):
+            if i == parent1_index:
+                continue
+            if i < parent1_index and r <= fitmap[i] or i > parent1_index and r <= fitmap[i] - diff:
+                return self.walking_strategies[parent1_index], self.walking_strategies[i]
+
+        return self.walking_strategies[parent1_index], self.walking_strategies[len(fitmap) - 1]
+
     def select_parent(self, fitmap):
         r = np.random.rand()  # 0-1
         r = r * fitmap[-1]
         for i in range(len(fitmap)):
             if r <= fitmap[i]:
-                return self.walking_strategies[i]
+                return i
 
-        return self.walking_strategies[len(fitmap) - 1]
+        return len(fitmap) - 1

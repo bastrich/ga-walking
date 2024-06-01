@@ -33,20 +33,22 @@ def crossover(walking_strategy_1, walking_strategy_2):
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-population = WalkingStrategyPopulation(period, size=15)
+# population = WalkingStrategyPopulation(period, size=15)
+with open('population', 'rb') as file:
+    population = pickle.load(file)
 
 envs = [L2M2019Env(visualize=False, difficulty=0) for _ in range(len(population.walking_strategies))]
 
 def evaluate(i, walking_strategy):
     global envs
     envs[i].reset()
-    last_reward = 0
+    total_reward = 0
     for sim_step in range(sim_steps_per_iteration):
-        observation, last_reward, done, info = envs[i].step(walking_strategy.get_muscle_activations(sim_step))
+        observation, reward, done, info = envs[i].step(walking_strategy.get_muscle_activations(sim_step))
+        total_reward += reward
         if done:
             break
-    return max(1 + last_reward, 0)
-
+    return max(total_reward, 0)
 
 if __name__ == "__main__":
 
@@ -107,7 +109,7 @@ if __name__ == "__main__":
             mutation_rate -= 0.01
             mutation_coefficient -= 0.01
 
-        shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.2)
+        shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
         mutation_rate = np.clip(mutation_rate, 0.01, 0.5)
         mutation_coefficient = np.clip(mutation_coefficient, 0.01, 10)
 
@@ -115,11 +117,7 @@ if __name__ == "__main__":
         fit_map = population.get_fitness_map(fitness_values)
         new_walking_strategies = []
         for _ in range(len(population.walking_strategies)):
-            parent1 = population.select_parent(fit_map)
-            parent2 = population.select_parent(fit_map)
-            # add excluding the same parent
-            # improve fitness function wiuth steps
-            # allow small back movements in fitness function
+            parent1, parent2 = population.select_parents(fit_map)
             new_walking_strategy = crossover(parent1, parent2)
 
             new_walking_strategy = mutate(new_walking_strategy, shrink_growth_rate, mutation_rate, mutation_coefficient)

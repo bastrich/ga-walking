@@ -494,6 +494,9 @@ class L2M2019Env(OsimEnv):
         self.vtgt = VTgtField(visualize=visualize, version=self.difficulty, dt=self.osim_model.stepsize, seed=seed)
         self.obs_vtgt_space = self.vtgt.vtgt_space
 
+        self.last_x = 0
+        self.delta_of_last_step = 0
+
     def reset(self, project=True, seed=None, init_pose=None, obs_as_dict=True):
         self.t = 0
         self.init_reward()
@@ -504,6 +507,8 @@ class L2M2019Env(OsimEnv):
         self.footstep['r_contact'] = 1
         self.footstep['l_contact'] = 1
 
+        self.last_x = 0
+        self.delta_of_last_step = 0
 
         # initialize state
         self.osim_model.state = self.osim_model.model.initializeState()
@@ -784,6 +789,13 @@ class L2M2019Env(OsimEnv):
 
         self.d_reward['footstep']['del_t'] += dt
 
+        distance_traveled = state_desc['body_pos']['pelvis'][0] - self.last_x
+        self.last_x = state_desc['body_pos']['pelvis'][0]
+
+        reward += 40 * distance_traveled
+
+        self.delta_of_last_step += distance_traveled
+
         # reward from velocity (penalize from deviating from v_tgt)
 
         p_body = [state_desc['body_pos']['pelvis'][0], -state_desc['body_pos']['pelvis'][2]]
@@ -793,7 +805,7 @@ class L2M2019Env(OsimEnv):
         self.d_reward['footstep']['del_v'] += (v_body - v_tgt)*dt
 
         # footstep reward (when made a new step)
-        if self.footstep['new']:
+        if self.footstep['new'] and self.delta_of_last_step >= 0:
             # footstep reward: so that solution does not avoid making footsteps
             # scaled by del_t, so that solution does not get higher rewards by making unnecessary (small) steps
             # reward_footstep_0 = self.d_reward['weight']['footstep']*self.d_reward['footstep']['del_t']
@@ -802,17 +814,20 @@ class L2M2019Env(OsimEnv):
             # the average velocity a step (instead of instantaneous velocity) is used
             # as velocity fluctuates within a step in normal human walking
             #reward_footstep_v = -self.reward_w['v_tgt']*(self.footstep['del_vx']**2)
-            reward_footstep_v = -self.d_reward['weight']['v_tgt']*np.linalg.norm(self.d_reward['footstep']['del_v'])/self.LENGTH0
+            # reward_footstep_v = -self.d_reward['weight']['v_tgt']*np.linalg.norm(self.d_reward['footstep']['del_v'])/self.LENGTH0
+            # reward_footstep_v = 20 * self.last_x
 
             # panalize effort
             # reward_footstep_e = -self.d_reward['weight']['effort']*self.d_reward['footstep']['effort']
 
+            reward += 20 * np.exp(self.delta_of_last_step)
+
             self.d_reward['footstep']['del_t'] = 0
             self.d_reward['footstep']['del_v'] = 0
             self.d_reward['footstep']['effort'] = 0
+            self.delta_of_last_step = 0
 
-            # reward += reward_footstep_0 + reward_footstep_v + reward_footstep_e
-            reward += reward_footstep_v
+            # reward += reward_footstep_0
 
         # success bonus
         if not self.is_done() and (self.osim_model.istep >= self.spec.timestep_limit): #and self.failure_mode is 'success':
@@ -821,7 +836,7 @@ class L2M2019Env(OsimEnv):
             #reward += reward_footstep_0 + 100
             reward += 10
 
-        return state_desc['body_pos']['pelvis'][0]
+        return reward
 
     def get_reward_2(self): # for L2M2019 Round 2
         state_desc = self.get_state_desc()
