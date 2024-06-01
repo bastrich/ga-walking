@@ -1,15 +1,19 @@
-from osim.env import L2M2019Env
+from my_osim import L2M2019Env
 import pickle
 from walking_strategy import WalkingStrategy
+from walking_strategy_population import WalkingStrategyPopulation
 
 # visualize the best
-with open('best-0', 'rb') as file:
-    best_walking_strategy = pickle.load(file)
+# with open('best-0', 'rb') as file:
+#     best_walking_strategy = pickle.load(file)
+
+with open('population', 'rb') as file:
+    best_walking_strategy = pickle.load(file).walking_strategies[1]
 
 env = L2M2019Env(visualize=True, difficulty=0)
 env.reset()
 
-total_reward = 0
+reward = 0
 
 for sim_step in range(10000):
     observation, reward, done, info = env.step(best_walking_strategy.get_muscle_activations(sim_step))
@@ -39,6 +43,7 @@ for sim_step in range(10000):
     #     0,
     #     1
     # ])
-    total_reward += reward
-    # if done:
-    #     break
+    if done:
+        break
+
+print(reward)
