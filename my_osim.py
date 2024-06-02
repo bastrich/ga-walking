@@ -72,6 +72,8 @@ class OsimModel(object):
         self.model.addController(self.brain)
         self.model_state = self.model.initSystem()
 
+        self.visualizer = self.model.getVisualizer() if visualize else None
+
     def list_elements(self):
         print("JOINTS")
         for i in range(self.jointSet.getSize()):
@@ -131,6 +133,7 @@ class OsimModel(object):
         for i in range(self.jointSet.getSize()):
             joint = self.jointSet.get(i)
             name = joint.getName()
+            # res["joint_pos_my"][name] = [joint.getTransformInGround(self.state).p()[i] for i in range(joint.numCoordinates())]
             res["joint_pos"][name] = [joint.get_coordinates(i).getValue(self.state) for i in range(joint.numCoordinates())]
             res["joint_vel"][name] = [joint.get_coordinates(i).getSpeedValue(self.state) for i in range(joint.numCoordinates())]
             res["joint_acc"][name] = [joint.get_coordinates(i).getAccelerationValue(self.state) for i in range(joint.numCoordinates())]
@@ -497,6 +500,9 @@ class L2M2019Env(OsimEnv):
         self.last_x = 0
         self.delta_of_last_step = 0
 
+        self.visualizer = self.osim_model.model.updVisualizer().updSimbodyVisualizer() if visualize else None
+        self.last_line_idx = None
+
     def reset(self, project=True, seed=None, init_pose=None, obs_as_dict=True):
         self.t = 0
         self.init_reward()
@@ -549,6 +555,10 @@ class L2M2019Env(OsimEnv):
         d = super(L2M2019Env, self).get_state_desc()
         pose = np.array([d['body_pos']['pelvis'][0], -d['body_pos']['pelvis'][2], d['joint_pos']['ground_pelvis'][2]])
         self.v_tgt_field, self.flag_new_v_tgt_field = self.vtgt.update(pose)
+
+
+        self.visualizer = self.osim_model.model.updVisualizer().updSimbodyVisualizer() if self.visualize else None
+        self.last_line_idx = None
 
         if not project:
             return self.get_state_desc()
@@ -768,6 +778,21 @@ class L2M2019Env(OsimEnv):
             return self.get_reward_2()
         return self.get_reward_1()
 
+    # def cross_product_2d(self, v1, v2):
+    #     return v1[0] * v2[1] - v1[1] * v2[0]
+    #
+    # def are_segments_intersecting(self, p1, p2, q1, q2):
+    #     r = p2 - p1
+    #     s = q2 - q1
+    #     r_cross_s = self.cross_product_2d(r, s)
+    #     if r_cross_s == 0:
+    #         return False  # Lines are parallel and non-intersecting
+    #
+    #     t = self.cross_product_2d(q1 - p1, s) / r_cross_s
+    #     u = self.cross_product_2d(q1 - p1, r) / r_cross_s
+    #
+    #     return 0 <= t <= 1 and 0 <= u <= 1
+
     def get_reward_1(self): # for L2M2019 Round 1
         state_desc = self.get_state_desc()
         if not self.get_prev_state_desc():
@@ -812,12 +837,68 @@ class L2M2019Env(OsimEnv):
         )
         reward += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle)
 
-        # penalize foe crossinbg legs
 
-        left_hip = np.array(state_desc['body_pos']['pelvis'])
-        left_heel = np.array(state_desc['body_pos']['pelvis'])
-        right_hip = np.array(state_desc['body_pos']['pelvis'])
-        right_heel = np.array(state_desc['body_pos']['pelvis'])
+
+
+        right_hip = np.array([state_desc['body_pos']['femur_r'][0], state_desc['body_pos']['femur_r'][2]])
+        left_hip = np.array([state_desc['body_pos']['femur_l'][0], state_desc['body_pos']['femur_l'][2]])
+        right_heel = np.array([state_desc['body_pos']['calcn_r'][0], state_desc['body_pos']['calcn_r'][2]])
+        left_heel = np.array([state_desc['body_pos']['calcn_l'][0], state_desc['body_pos']['calcn_l'][2]])
+
+        hips = left_hip - right_hip
+        hips_unit = hips / np.linalg.norm(hips)
+        mid_hip = (left_hip + right_hip) / 2
+        mid_hip_right_heel = right_heel - mid_hip
+        mid_hip_left_heel = left_heel - mid_hip
+
+        # Находим проекции векторов mid_C и mid_D на единичный вектор направления AB
+        projection_right_heel = np.dot(mid_hip_right_heel, hips_unit)
+        projection_left_heel = np.dot(mid_hip_left_heel, hips_unit)
+
+        if projection_right_heel < projection_left_heel:
+            # print('NOT crossing')
+            reward += 0.1
+        elif projection_right_heel > projection_left_heel:
+            # print('crossing')
+            reward -= 0.1
+
+
+
+        #
+        # if self.visualize:
+        #     # def add_custom_decorations(system, state):
+        #     #     # Создаем декорацию линии
+        #     #     line = opensim.simbody.DecorativeLine(state_desc['joint_pos']['hip_l'], state_desc['body_pos']['calcn_l'])
+        #     #     line.setColor(opensim.Vec3(0, 1, 0))  # Устанавливаем цвет линии (красный)
+        #     #     line.setLineThickness(0.1)
+        #     #
+        #     #     # Добавляем декорацию к системе
+        #     #     system.addDecoration(state, line)
+        #
+        #     self.visualize
+        #
+        #     line = opensim.simbody.DecorativeLine(
+        #         # opensim.Vec3(-state_desc['joint_pos']['hip_l'][0], state_desc['joint_pos']['hip_l'][1], -state_desc['joint_pos']['hip_l'][2]),
+        #         # opensim.Vec3(-state_desc['body_pos']['calcn_l'][0], state_desc['body_pos']['calcn_l'][1], -state_desc['body_pos']['calcn_l'][2])
+        #         opensim.Vec3(0, 0, 0),
+        #         opensim.Vec3(state_desc['body_pos']['femur_l'])
+        #     )
+        #     line.setColor(opensim.Green)  # Устанавливаем цвет линии (красный)
+        #     line.setLineThickness(5)
+        #
+        #     # if self.last_line_idx is not None:
+        #     #     self.visualizer.updDecoration(self.last_line_idx).setOpacity(255)
+        #     self.last_line_idx = self.visualizer.addDecoration(0, opensim.Transform(), line)
+
+        # b = (right_heel[0] - right_hip[0])*(left_heel[1] - left_hip[1]) - (right_heel[1] - right_hip[1])*(left_heel[0] - left_hip[0])
+        # a = (right_heel[0] - right_hip[0])*(right_hip[1] - left_hip[1]) - (right_heel[1] - right_hip[1])*(right_hip[0] - left_hip[0])
+        # c = (left_heel[0] - left_hip[0])*(right_hip[1] - left_hip[1]) - (left_heel[1] - left_hip[1])*(right_hip[0] - left_hip[0])
+        #
+        # legs_crossing = False
+        # if b == 0:
+        #     legs_crossing = False
+        # elif 0 <= a/b <= 1 or 0 <= c/b <= 1:
+        #     legs_crossing = True
 
 
         # try to remove normalization
