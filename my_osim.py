@@ -804,9 +804,25 @@ class L2M2019Env(OsimEnv):
 
         self.d_reward['footstep']['del_v'] += (v_body - v_tgt)*dt
 
-        # add angle between head and pelvis!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        prev_pelvis_head_angle = np.arccos(
+            np.abs(self.get_prev_state_desc()['body_pos']['pelvis'][1] - self.get_prev_state_desc()['body_pos']['head'][1]) / np.linalg.norm(np.array(self.get_prev_state_desc()['body_pos']['pelvis']) - np.array(self.get_prev_state_desc()['body_pos']['head']))
+        )
+        current_pelvis_head_angle = np.arccos(
+            np.abs(state_desc['body_pos']['pelvis'][1] - state_desc['body_pos']['head'][1]) / np.linalg.norm(np.array(state_desc['body_pos']['pelvis']) - np.array(state_desc['body_pos']['head']))
+        )
+        reward += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle)
+
+        # penalize foe crossinbg legs
+
+        left_hip = np.array(state_desc['body_pos']['pelvis'])
+        left_heel = np.array(state_desc['body_pos']['pelvis'])
+        right_hip = np.array(state_desc['body_pos']['pelvis'])
+        right_heel = np.array(state_desc['body_pos']['pelvis'])
+
+
         # try to remove normalization
         # limit reward for big steps
+
 
         # footstep reward (when made a new step)
         if self.footstep['new'] and self.delta_of_last_step >= 0:
@@ -824,7 +840,7 @@ class L2M2019Env(OsimEnv):
             # panalize effort
             reward += -self.d_reward['weight']['effort']*self.d_reward['footstep']['effort']
 
-            reward += 20 * np.exp(self.delta_of_last_step)
+            reward += 10 * np.exp(self.delta_of_last_step)
 
             self.d_reward['footstep']['del_t'] = 0
             self.d_reward['footstep']['del_v'] = 0
