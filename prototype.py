@@ -34,9 +34,9 @@ def crossover(walking_strategy_1, walking_strategy_2):
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-population = WalkingStrategyPopulation(period, size=15)
-# with open('population', 'rb') as file:
-#     population = pickle.load(file)
+# population = WalkingStrategyPopulation(period, size=15)
+with open('population', 'rb') as file:
+    population = pickle.load(file)
 
 envs = [L2M2019Env(visualize=False, difficulty=0) for _ in range(len(population.walking_strategies))]
 
@@ -61,7 +61,14 @@ if __name__ == "__main__":
                 # if random.random() < shrink_growth_rate:
                 #     new_muscle_activations_fourier_coefficients[i][j] = random.choice([-100, 0, 100])
                 if np.random.uniform() < mutation_rate:
-                    new_muscle_activations_fourier_coefficients[i][j] += np.round(np.random.normal(scale=100))
+                    amount = np.round(np.random.normal(scale=10))
+                    # if amount > 100:
+                    #     amount = amount % 100
+                    # elif amount < -100:
+                    #     amount = - np.abs(amount) % 100
+
+                    new_muscle_activations_fourier_coefficients[i][j] += amount
+
                     if j in [3, 6, 9, 12, 15]:
                         continue
                     if new_muscle_activations_fourier_coefficients[i][j] > 100:
@@ -104,8 +111,8 @@ if __name__ == "__main__":
         if current_best_fitness_value > total_best_fitness_value:
             total_best_fitness_value = current_best_fitness_value
 
-        if iterations_without_fitness_improvement > 5:
-            print('5 generations without improvement, increasing mutation rate')
+        if iterations_without_fitness_improvement > 30:
+            print('30 generations without improvement, increasing mutation rate')
             # shrink_growth_rate += 0.01
             mutation_rate += 0.01
             # mutation_coefficient += 0.01

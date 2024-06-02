@@ -806,6 +806,7 @@ class L2M2019Env(OsimEnv):
 
         # add angle between head and pelvis!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # try to remove normalization
+        # limit reward for big steps
 
         # footstep reward (when made a new step)
         if self.footstep['new'] and self.delta_of_last_step >= 0:
