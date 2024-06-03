@@ -13,13 +13,15 @@ class WalkingStrategy:
          [self.normalize(self.calculate_fourier_series_sums_2(coefficients)) for coefficients in self.muscle_activations_fourier_coefficients]).transpose()
 
     def normalize(self, muscle_activations):
-        min_value = np.min(muscle_activations)
-        max_value = np.max(muscle_activations)
+        return muscle_activations
 
-        if min_value == max_value:
-            return muscle_activations
-
-        return (muscle_activations - min_value) / (max_value - min_value)
+        # min_value = np.min(muscle_activations)
+        # max_value = np.max(muscle_activations)
+        #
+        # if min_value == max_value:
+        #     return muscle_activations
+        #
+        # return (muscle_activations - min_value) / (max_value - min_value)
 
     def calculate_fourier_series_sums_1(self, single_muscle_coefficients):
         return np.array([self.calculate_fourier_series_sum(single_muscle_coefficients, i) for i in range(self.period)])

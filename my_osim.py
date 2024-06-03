@@ -829,16 +829,15 @@ class L2M2019Env(OsimEnv):
 
         self.d_reward['footstep']['del_v'] += (v_body - v_tgt)*dt
 
-        prev_pelvis_head_angle = np.arccos(
-            np.abs(self.get_prev_state_desc()['body_pos']['pelvis'][1] - self.get_prev_state_desc()['body_pos']['head'][1]) / np.linalg.norm(np.array(self.get_prev_state_desc()['body_pos']['pelvis']) - np.array(self.get_prev_state_desc()['body_pos']['head']))
-        )
-        current_pelvis_head_angle = np.arccos(
-            np.abs(state_desc['body_pos']['pelvis'][1] - state_desc['body_pos']['head'][1]) / np.linalg.norm(np.array(state_desc['body_pos']['pelvis']) - np.array(state_desc['body_pos']['head']))
-        )
+        prev_pelvis_head = np.array(self.get_prev_state_desc()['body_pos']['head']) - np.array(self.get_prev_state_desc()['body_pos']['pelvis'])
+        prev_projection_pelvis_head = np.linalg.norm([prev_pelvis_head[0], prev_pelvis_head[2]])
+        prev_pelvis_head_angle = np.arctan2(prev_projection_pelvis_head, prev_pelvis_head[1])
+
+        pelvis_head = np.array(state_desc['body_pos']['head']) - np.array(state_desc['body_pos']['pelvis'])
+        projection_pelvis_head = np.linalg.norm([pelvis_head[0], pelvis_head[2]])
+        current_pelvis_head_angle = np.arctan2(projection_pelvis_head, pelvis_head[1])
+
         reward += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle)
-
-
-
 
         right_hip = np.array([state_desc['body_pos']['femur_r'][0], state_desc['body_pos']['femur_r'][2]])
         left_hip = np.array([state_desc['body_pos']['femur_l'][0], state_desc['body_pos']['femur_l'][2]])
@@ -904,6 +903,10 @@ class L2M2019Env(OsimEnv):
         # try to remove normalization
         # limit reward for big steps
         # try to make shrink growth with amoubnt of coefficients
+        # delete creatures that are less than minimum from previous population
+        # make scale of mutation adjustment relative to its initial value
+        # make genotype to its original bound when mutating
+        # perhaps scale mutation rate depending on the size of genotype
 
 
         # footstep reward (when made a new step)

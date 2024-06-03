@@ -72,9 +72,9 @@ if __name__ == "__main__":
                     if j in [3, 6, 9, 12, 15]:
                         continue
                     if new_muscle_activations_fourier_coefficients[i][j] > 100:
-                        new_muscle_activations_fourier_coefficients[i][j] = new_muscle_activations_fourier_coefficients[i][j] % 100
+                        new_muscle_activations_fourier_coefficients[i][j] = 100
                     elif new_muscle_activations_fourier_coefficients[i][j] < -100:
-                        new_muscle_activations_fourier_coefficients[i][j] = - np.abs(new_muscle_activations_fourier_coefficients[i][j]) % 100
+                        new_muscle_activations_fourier_coefficients[i][j] = -100
 
         return WalkingStrategy(period, new_muscle_activations_fourier_coefficients)
 
