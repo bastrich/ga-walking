@@ -835,7 +835,7 @@ class L2M2019Env(OsimEnv):
         current_pelvis_head_angle = np.arccos(
             np.abs(state_desc['body_pos']['pelvis'][1] - state_desc['body_pos']['head'][1]) / np.linalg.norm(np.array(state_desc['body_pos']['pelvis']) - np.array(state_desc['body_pos']['head']))
         )
-        reward += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle)
+        reward += -20 * (current_pelvis_head_angle - prev_pelvis_head_angle)
 
 
 
@@ -903,6 +903,7 @@ class L2M2019Env(OsimEnv):
 
         # try to remove normalization
         # limit reward for big steps
+        # try to make shrink growth with amoubnt of coefficients
 
 
         # footstep reward (when made a new step)

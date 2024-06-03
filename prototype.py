@@ -10,7 +10,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 import time
 
-period = 200
+period = 400
 
 def crossover(walking_strategy_1, walking_strategy_2):
     # switch_indexes = np.random.randint(1, 175, np.random.randint(1, 5))

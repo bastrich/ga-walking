@@ -8,7 +8,7 @@ from walking_strategy_population import WalkingStrategyPopulation
 #     best_walking_strategy = pickle.load(file)
 
 with open('population', 'rb') as file:
-    best_walking_strategy = pickle.load(file).walking_strategies[2]
+    best_walking_strategy = pickle.load(file).walking_strategies[0]
 
 env = L2M2019Env(visualize=True, difficulty=0)
 env.reset()
@@ -47,4 +47,4 @@ for sim_step in range(10000):
     if done:
         break
 
-print(total_reward)
+print(f'{total_reward} for {sim_step+1} steps')
