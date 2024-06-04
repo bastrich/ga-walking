@@ -7,6 +7,8 @@ from walking_strategy import WalkingStrategy
 # create data
 x = [i for i in range(400)]
 
+# with open('population', 'rb') as file:
+#     walking_strategy = pickle.load(file).walking_strategies[0]
 walking_strategy = WalkingStrategy(400)
 
 # with open('best', 'rb') as file:
