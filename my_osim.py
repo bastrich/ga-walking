@@ -907,6 +907,7 @@ class L2M2019Env(OsimEnv):
         # make scale of mutation adjustment relative to its initial value
         # make genotype to its original bound when mutating
         # perhaps scale mutation rate depending on the size of genotype
+        # period 200
 
 
         # footstep reward (when made a new step)
