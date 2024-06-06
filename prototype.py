@@ -61,13 +61,16 @@ if __name__ == "__main__":
                 # if random.random() < shrink_growth_rate:
                 #     new_muscle_activations_fourier_coefficients[i][j] = random.choice([-100, 0, 100])
                 if np.random.uniform() < mutation_rate:
-                    amount = np.round(np.random.normal(scale=10))
+                    amount = np.random.normal(scale=10)
                     # if amount > 100:
                     #     amount = amount % 100
                     # elif amount < -100:
                     #     amount = - np.abs(amount) % 100
 
-                    new_muscle_activations_fourier_coefficients[i][j] += amount
+                    if np.random.choice([True, False]):
+                        new_muscle_activations_fourier_coefficients[i][j] = -new_muscle_activations_fourier_coefficients[i][j]
+                    else:
+                        new_muscle_activations_fourier_coefficients[i][j] += np.round(amount * (new_muscle_activations_fourier_coefficients[i][j] / 35))
 
                     if j in [3, 6, 9, 12, 15]:
                         continue
@@ -75,6 +78,7 @@ if __name__ == "__main__":
                         new_muscle_activations_fourier_coefficients[i][j] = 100
                     elif new_muscle_activations_fourier_coefficients[i][j] < -100:
                         new_muscle_activations_fourier_coefficients[i][j] = -100
+
 
         return WalkingStrategy(period, new_muscle_activations_fourier_coefficients)
 
@@ -123,17 +127,33 @@ if __name__ == "__main__":
             mutation_rate -= 0.01
             # mutation_coefficient -= 0.01
 
+
+        # give a birth to a new population
+        new_walking_strategies = []
+
+        min_fitness = np.min(fitness_values)
+        if min_fitness < 0:
+            fitness_values = fitness_values + np.abs(min_fitness)
+
+        # preserve elites
+        max_fits = -np.partition(-fitness_values, 3)[:3]
+        elites_saved = 0
+        for i, walking_strategy in enumerate(population.walking_strategies):
+            if fitness_values[i] in max_fits:
+                new_walking_strategies.append(walking_strategy)
+                elites_saved += 1
+
+            if elites_saved == 3:
+                break
+
+
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
         mutation_rate = np.clip(mutation_rate, 0.01, 0.5)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
 
-        # give a birth to a new population
-        min_fitness = np.min(fitness_values)
-        if min_fitness < 0:
-            fitness_values = fitness_values + np.abs(min_fitness)
         fit_map = population.get_fitness_map(fitness_values)
-        new_walking_strategies = []
-        for _ in range(len(population.walking_strategies)):
+
+        for _ in range(len(population.walking_strategies) - 3):
             parent1, parent2 = population.select_parents(fit_map)
             new_walking_strategy = crossover(parent1, parent2)
 
@@ -141,16 +161,7 @@ if __name__ == "__main__":
 
             new_walking_strategies.append(new_walking_strategy)
 
-        # preserve elites
-        max_fits = -np.partition(-fitness_values, 3)[:3]
-        elites_saved = 0
-        for i, walking_strategy in enumerate(population.walking_strategies):
-            if fitness_values[i] in max_fits:
-                new_walking_strategies[elites_saved] = walking_strategy
-                elites_saved += 1
 
-            if elites_saved == 3:
-                break
 
         population = WalkingStrategyPopulation(period, walking_strategies=new_walking_strategies)
         # save current population

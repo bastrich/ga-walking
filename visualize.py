@@ -8,7 +8,7 @@ from walking_strategy_population import WalkingStrategyPopulation
 #     best_walking_strategy = pickle.load(file)
 
 with open('population', 'rb') as file:
-    best_walking_strategy = pickle.load(file).walking_strategies[0]
+    best_walking_strategy = pickle.load(file).walking_strategies[12]
 
 env = L2M2019Env(visualize=True, difficulty=0)
 env.reset()

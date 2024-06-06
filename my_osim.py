@@ -904,10 +904,13 @@ class L2M2019Env(OsimEnv):
         # limit reward for big steps
         # try to make shrink growth with amoubnt of coefficients
         # delete creatures that are less than minimum from previous population
-        # make scale of mutation adjustment relative to its initial value
         # make genotype to its original bound when mutating
         # perhaps scale mutation rate depending on the size of genotype
-        # period 200
+        # period 200???
+        # try to make discretization 4 or 5 instead of 1
+        # sconstrain inital options to binary combinations of muscles activation
+        # not minus small decrease in distance
+        # may be dynamic fitness function
 
 
         # footstep reward (when made a new step)
@@ -922,6 +925,7 @@ class L2M2019Env(OsimEnv):
             #reward_footstep_v = -self.reward_w['v_tgt']*(self.footstep['del_vx']**2)
             # reward_footstep_v = -self.d_reward['weight']['v_tgt']*np.linalg.norm(self.d_reward['footstep']['del_v'])/self.LENGTH0
             # reward_footstep_v = 20 * self.last_x
+
 
             # panalize effort
             reward += -self.d_reward['weight']['effort']*self.d_reward['footstep']['effort']
