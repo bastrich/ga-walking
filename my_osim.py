@@ -911,6 +911,7 @@ class L2M2019Env(OsimEnv):
         # sconstrain inital options to binary combinations of muscles activation
         # not minus small decrease in distance
         # may be dynamic fitness function
+        # penalize for up knee higher than pelvis
 
 
         # footstep reward (when made a new step)
