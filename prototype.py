@@ -34,9 +34,9 @@ def crossover(walking_strategy_1, walking_strategy_2):
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-# population = WalkingStrategyPopulation(period, size=15)
-with open('population', 'rb') as file:
-    population = pickle.load(file)
+population = WalkingStrategyPopulation(period, size=30)
+# with open('population', 'rb') as file:
+#     population = pickle.load(file)
 
 envs = [L2M2019Env(visualize=False, difficulty=0) for _ in range(len(population.walking_strategies))]
 
