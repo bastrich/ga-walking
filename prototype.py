@@ -10,33 +10,33 @@ from concurrent.futures import ProcessPoolExecutor
 
 import time
 
-period = 400
+period = 200
 
 def crossover(walking_strategy_1, walking_strategy_2):
     # switch_indexes = np.random.randint(1, 175, np.random.randint(1, 5))
-    switch_indexes = np.random.randint(1, 175, 1)
+    switch_indexes = np.random.randint(1, 439, 1)
     switch = True
-    new_muscle_activations_fourier_coefficients = []
+    new_muscle_activations = []
 
-    for i in range(176):
+    for i in range(440):
         if i in switch_indexes:
             switch = not switch
         if switch is True:
-            new_muscle_activations_fourier_coefficients.append(walking_strategy_1.muscle_activations_fourier_coefficients[i // 16][i % 16])
+            new_muscle_activations.append(walking_strategy_1.muscle_activations[i // 40][i % 40])
         else:
-            new_muscle_activations_fourier_coefficients.append(walking_strategy_2.muscle_activations_fourier_coefficients[i // 16][i % 16])
+            new_muscle_activations.append(walking_strategy_2.muscle_activations[i // 40][i % 40])
 
-    new_muscle_activations_fourier_coefficients = np.array_split(new_muscle_activations_fourier_coefficients, 11)
+    new_muscle_activations = np.array_split(new_muscle_activations, 11)
 
-    return WalkingStrategy(period, new_muscle_activations_fourier_coefficients)
+    return WalkingStrategy(period, new_muscle_activations)
 
 
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-population = WalkingStrategyPopulation(period, size=30)
-# with open('population', 'rb') as file:
-#     population = pickle.load(file)
+# population = WalkingStrategyPopulation(period, size=30)
+with open('population', 'rb') as file:
+    population = pickle.load(file)
 
 envs = [L2M2019Env(visualize=False, difficulty=0) for _ in range(len(population.walking_strategies))]
 
@@ -54,38 +54,38 @@ def evaluate(i, walking_strategy):
 if __name__ == "__main__":
 
     def mutate(walking_strategy, mutation_rate):
-        new_muscle_activations_fourier_coefficients = copy.deepcopy(walking_strategy.muscle_activations_fourier_coefficients)
+        new_muscle_activations = copy.deepcopy(walking_strategy.muscle_activations)
 
         for i in range(11):
-            for j in range(16):
+            for j in range(40):
                 # if random.random() < shrink_growth_rate:
                 #     new_muscle_activations_fourier_coefficients[i][j] = random.choice([-100, 0, 100])
                 if np.random.uniform() < mutation_rate:
-                    amount = np.random.normal(scale=10)
-                    # if amount > 100:
-                    #     amount = amount % 100
-                    # elif amount < -100:
-                    #     amount = - np.abs(amount) % 100
+                    scale = new_muscle_activations[i][j]
+                    if scale <= 0.03:
+                        scale = 0.03
 
-                    if np.random.choice([True, False]):
-                        new_muscle_activations_fourier_coefficients[i][j] = -new_muscle_activations_fourier_coefficients[i][j]
-                    else:
-                        new_muscle_activations_fourier_coefficients[i][j] += np.round(amount * (new_muscle_activations_fourier_coefficients[i][j] / 35))
+                    new_value = np.random.normal(loc=new_muscle_activations[i][j], scale=scale)
 
-                    if j in [3, 6, 9, 12, 15]:
-                        continue
-                    if new_muscle_activations_fourier_coefficients[i][j] > 100:
-                        new_muscle_activations_fourier_coefficients[i][j] = 100
-                    elif new_muscle_activations_fourier_coefficients[i][j] < -100:
-                        new_muscle_activations_fourier_coefficients[i][j] = -100
+                    if new_muscle_activations[i][j] <= 0 and new_value <= 0:
+                        new_value = np.abs(new_value)
+                    elif new_muscle_activations[i][j] >= 1 and new_value >= 1:
+                        new_value = 2 - new_value
+
+                    if new_value > 1:
+                        new_value = 1
+                    elif new_value < 0:
+                        new_value = 0
+
+                    new_muscle_activations[i][j] = new_value
 
 
-        return WalkingStrategy(period, new_muscle_activations_fourier_coefficients)
+        return WalkingStrategy(period, new_muscle_activations)
 
     executor = ProcessPoolExecutor(max_workers=len(population.walking_strategies))
 
     # shrink_growth_rate = 0.01
-    mutation_rate = 0.01
+    mutation_rate = 0.5
     # mutation_coefficient = 0.01
 
     total_best_fitness_value = -1000
@@ -118,13 +118,13 @@ if __name__ == "__main__":
         if iterations_without_fitness_improvement > 30:
             print('30 generations without improvement, increasing mutation rate')
             # shrink_growth_rate += 0.01
-            mutation_rate += 0.01
+            mutation_rate += 0.1
             # mutation_coefficient += 0.01
             iterations_without_fitness_improvement = 0
         elif iterations_with_fitness_improvement > 0:
             print('1 generation with improvement, decreasing mutation rate')
             # shrink_growth_rate -= 0.01
-            mutation_rate -= 0.01
+            mutation_rate -= 0.1
             # mutation_coefficient -= 0.01
 
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
 
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
-        mutation_rate = np.clip(mutation_rate, 0.01, 0.5)
+        mutation_rate = np.clip(mutation_rate, 0.1, 0.9)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
 
         fit_map = population.get_fitness_map(fitness_values)

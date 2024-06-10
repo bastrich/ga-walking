@@ -5,17 +5,17 @@ import matplotlib.pyplot as plt
 from walking_strategy import WalkingStrategy
 
 # create data
-x = [i for i in range(400)]
+x = [i for i in range(200)]
 
 with open('population', 'rb') as file:
     walking_strategy = pickle.load(file).walking_strategies[0]
-# walking_strategy = WalkingStrategy(400)
+# walking_strategy = WalkingStrategy(200)
 
 # with open('best', 'rb') as file:
 #     walking_strategy = pickle.load(file)
 
-y1 = [walking_strategy.get_muscle_activations(i)[0] for i in x]
-y2 = [walking_strategy.get_muscle_activations(i+200)[0] for i in x]
+y1 = [walking_strategy.get_muscle_activations(i)[2] for i in x]
+y2 = [walking_strategy.get_muscle_activations(i+200)[2] for i in x]
 
 # plot lines
 plt.plot(x, y1, label="line 1")
