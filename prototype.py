@@ -16,9 +16,9 @@ period = 200
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-population = WalkingStrategyPopulation(period, size=30)
-# with open('population', 'rb') as file:
-#     population = pickle.load(file)
+# population = WalkingStrategyPopulation(period, size=30)
+with open('population', 'rb') as file:
+    population = pickle.load(file)
 
 envs = [L2M2019Env(visualize=False, difficulty=0) for _ in range(len(population.walking_strategies))]
 
@@ -40,6 +40,7 @@ if __name__ == "__main__":
 
     # shrink_growth_rate = 0.01
     mutation_rate = 0.01
+    mutation_amount = 0.1
     # mutation_coefficient = 0.01
 
     total_best_fitness_value = -1000
@@ -73,12 +74,14 @@ if __name__ == "__main__":
             print('30 generations without improvement, increasing mutation rate')
             # shrink_growth_rate += 0.01
             mutation_rate += 0.01
+            mutation_amount += 0.1
             # mutation_coefficient += 0.01
             iterations_without_fitness_improvement = 0
         elif iterations_with_fitness_improvement > 2:
             print('1 generation with improvement, decreasing mutation rate')
             # shrink_growth_rate -= 0.01
             mutation_rate -= 0.01
+            mutation_amount -= 0.1
             # mutation_coefficient -= 0.01
 
 
@@ -103,6 +106,7 @@ if __name__ == "__main__":
 
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
         mutation_rate = np.clip(mutation_rate, 0.01, 0.2)
+        mutation_amount = np.clip(mutation_amount, 0.1, 1)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
 
         fit_map = population.get_fitness_map(fitness_values)
@@ -111,7 +115,7 @@ if __name__ == "__main__":
             parent1, parent2 = population.select_parents(fit_map)
             new_walking_strategy = parent1.crossover(parent2)
 
-            new_walking_strategy = new_walking_strategy.mutate(mutation_rate)
+            new_walking_strategy = new_walking_strategy.mutate(mutation_rate, mutation_amount)
 
             new_walking_strategies.append(new_walking_strategy)
 

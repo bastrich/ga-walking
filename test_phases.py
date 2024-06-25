@@ -57,7 +57,7 @@ x = [i for i in range(200)]
 # y = WalkingStrategy(period=200, symmetric=True).crossover(WalkingStrategy(period=200, symmetric=True)).mutate().muscle_activations[10]
 
 with open('population', 'rb') as file:
-    best_walking_strategy = pickle.load(file).walking_strategies[0]
+    best_walking_strategy = pickle.load(file).walking_strategies[5]
 
 y = best_walking_strategy.muscle_activations[0]
 

@@ -817,7 +817,7 @@ class L2M2019Env(OsimEnv):
         distance_traveled = state_desc['body_pos']['pelvis'][0] - self.last_x
         self.last_x = state_desc['body_pos']['pelvis'][0]
 
-        reward += 40 * distance_traveled
+        # reward += 40 * distance_traveled !!!!!!!
 
         self.delta_of_last_step += distance_traveled
 
@@ -837,7 +837,7 @@ class L2M2019Env(OsimEnv):
         projection_pelvis_head = np.linalg.norm([pelvis_head[0], pelvis_head[2]])
         current_pelvis_head_angle = np.arctan2(projection_pelvis_head, pelvis_head[1])
 
-        reward += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle)
+        # reward += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle) !!!!!!!!!!
 
         right_hip = np.array([state_desc['body_pos']['femur_r'][0], state_desc['body_pos']['femur_r'][2]])
         left_hip = np.array([state_desc['body_pos']['femur_l'][0], state_desc['body_pos']['femur_l'][2]])
@@ -854,12 +854,12 @@ class L2M2019Env(OsimEnv):
         projection_right_heel = np.dot(mid_hip_right_heel, hips_unit)
         projection_left_heel = np.dot(mid_hip_left_heel, hips_unit)
 
-        if projection_right_heel < projection_left_heel:
-            # print('NOT crossing')
-            reward += 0.1
-        elif projection_right_heel > projection_left_heel:
-            # print('crossing')
-            reward -= 0.1
+        # if projection_right_heel < projection_left_heel: !!!!!!!!!!!!!!!!
+        #     # print('NOT crossing')
+        #     reward += 0.1
+        # elif projection_right_heel > projection_left_heel:
+        #     # print('crossing')
+        #     reward -= 0.1
 
 
 
@@ -900,22 +900,22 @@ class L2M2019Env(OsimEnv):
         #     legs_crossing = True
 
 
-        # try to remove normalization
+
         # limit reward for big steps
         # try to make shrink growth with amoubnt of coefficients
         # delete creatures that are less than minimum from previous population
-        # make genotype to its original bound when mutating
-        # perhaps scale mutation rate depending on the size of genotype
-        # period 200???
-        # try to make discretization 4 or 5 instead of 1
         # sconstrain inital options to binary combinations of muscles activation
         # not minus small decrease in distance
         # may be dynamic fitness function
         # penalize for up knee higher than pelvis
-
+        # increase population size and queue in thread pool
 
         # footstep reward (when made a new step)
-        if self.footstep['new'] and self.delta_of_last_step >= 0:
+        if self.footstep['new']:
+            reward += 10 * self.d_reward['footstep']['del_t']
+            if self.delta_of_last_step < 0:
+                reward += self.delta_of_last_step
+
             # footstep reward: so that solution does not avoid making footsteps
             # scaled by del_t, so that solution does not get higher rewards by making unnecessary (small) steps
             # reward_footstep_0 = self.d_reward['weight']['footstep']*self.d_reward['footstep']['del_t']
@@ -929,14 +929,15 @@ class L2M2019Env(OsimEnv):
 
 
             # panalize effort
-            reward += -self.d_reward['weight']['effort']*self.d_reward['footstep']['effort']
-
-            reward += 10 * np.exp(self.delta_of_last_step)
-
+            reward += -self.d_reward['footstep']['effort']
+            #
+            # reward += 10 * np.exp(self.delta_of_last_step)
+            #
             self.d_reward['footstep']['del_t'] = 0
-            self.d_reward['footstep']['del_v'] = 0
+            # self.d_reward['footstep']['del_v'] = 0
             self.d_reward['footstep']['effort'] = 0
             self.delta_of_last_step = 0
+
 
             # reward += reward_footstep_0
 
