@@ -1,16 +1,23 @@
 import numpy as np
 from perlin_noise import PerlinNoise
 from scipy.interpolate import interp1d
+import copy
 
 class WalkingStrategy:
-    def __init__(self, period, symetric=True, dna=None):
+    def __init__(self, period, symmetric=True, dna=None):
         self.period = period
+        self.symmetric = symmetric
         if dna is not None:
             self.dna = dna
         else:
-            self.dna = [self.get_random_gene(period) for _ in range(11 if symetric else 22)]
+            self.dna = [self.get_random_gene(period) for _ in range(11 if self.symmetric else 22)]
 
         self.muscle_activations = [self.calculate_muscle_activation(gene, period) for gene in self.dna]
+        if self.symmetric:
+            self.other_leg_muscle_activations = np.roll(self.muscle_activations, self.period // 2)
+
+        # if any(isinstance(a, complex) for a in self.muscle_activations) or any(isinstance(a, complex) for a in self.other_leg_muscle_activations):
+        #     a = 5
 
         # if muscle_activations is None:
         #     self.muscle_activations = [WalkingStrategy.generate_single_muscle_activations() for _ in range(11)]
@@ -54,35 +61,53 @@ class WalkingStrategy:
         current_indexes = np.arange(len(signal))
         new_indexes = np.linspace(0, len(signal) - 1, period)
         interpolator = interp1d(current_indexes, signal, kind='cubic', fill_value='extrapolate')
-        return interpolator(new_indexes)
+        result = interpolator(new_indexes)
+        return result
 
     def crossover(self, other):
-        return self
+        if self.symmetric != other.symmetric:
+            raise ValueError("Cannot crossover strategies of different symmetric types")
+
+        switch_index = np.random.randint(0, 11 if self.symmetric else 22)
+
+        return WalkingStrategy(
+            period=self.period,
+            symmetric=self.symmetric,
+            dna=self.dna[:switch_index] + other.dna[switch_index:]
+        )
 
     def mutate(self):
-        return self
+        new_dna = copy.deepcopy(self.dna)
+        for i in range(len(new_dna)):
+            for j in range(len(new_dna[i])):
+                if np.random.uniform() < 0.05:
+                    new_dna[i][j] += 0.5 * np.random.normal()
 
-    # def normalize(self, muscle_activations):
-    #     min_value = np.min(muscle_activations)
-    #     max_value = np.max(muscle_activations)
-    #
-    #     if min_value == max_value:
-    #         return muscle_activations
-    #
-    #     return (muscle_activations - min_value) / (max_value - min_value)
-    #
-    # def calculate_fourier_series_sums_1(self, single_muscle_coefficients):
-    #     return np.array([self.calculate_fourier_series_sum(single_muscle_coefficients, i) for i in range(self.period)])
-    #
-    # def calculate_fourier_series_sums_2(self, single_muscle_coefficients):
-    #     return np.array([self.calculate_fourier_series_sum(single_muscle_coefficients, i + self.period // 2) for i in range(self.period)])
-    #
-    # @staticmethod
-    # def generate_single_muscle_activations():
-    #     return [np.random.uniform(0, 1) for _ in range(40)]
-    #
-    # def get_muscle_activations(self, time):
-    #     return self.muscle_activations_cache[time % self.period]
-    #
-    # def calculate_fourier_series_sum(self, coefficients, time):
-    #     return coefficients[(time % self.period) // 5]
+            new_dna[i][0] = np.clip(np.abs(new_dna[i][0]), 0, 0.999999)
+
+            if self.dna[i][0] < 0.5 <= new_dna[i][0]:
+                new_gene = np.fft.fft(np.clip(np.real(np.fft.ifft(new_dna[i][1:])), 0, 1))
+                new_gene = np.insert(new_gene, 0, new_dna[i][0] + 0j)
+                new_dna[i] = new_gene
+            elif self.dna[i][0] >= 0.5 > new_dna[i][0]:
+                new_gene = np.fft.fft(np.clip(np.real(np.fft.ifft(new_dna[i][1:])), 0, 1))
+                new_gene = np.insert(new_gene, 0, new_dna[i][0] + 0j)
+                new_dna[i] = new_gene
+
+            if new_dna[i][0] < 0.5:
+                new_dna[i][1:] = np.clip(new_dna[i][1:], 0, 1)
+            else:
+                new_gene = np.fft.fft(np.clip(np.real(np.fft.ifft(new_dna[i][1:])), 0, 1))
+                new_gene = np.insert(new_gene, 0, new_dna[i][0] + 0j)
+                new_dna[i] = new_gene
+
+        return WalkingStrategy(period=self.period, symmetric=self.symmetric, dna=new_dna)
+
+    def get_muscle_activations(self, time):
+        if self.symmetric:
+            result = [muscle_activation[time % self.period] for muscle_activation in self.muscle_activations] + [muscle_activation[time % self.period] for muscle_activation in self.other_leg_muscle_activations]
+            # if any(isinstance(a, complex) for a in result):
+            #     a = 5
+            return result
+        else:
+            return [muscle_activation[time % self.period] for muscle_activation in self.muscle_activations]
