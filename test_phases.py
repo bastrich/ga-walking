@@ -54,10 +54,15 @@ x = [i for i in range(200)]
 #
 # # y2 = [noise(i / 40) for i in x]
 
-y = WalkingStrategy(period=200, symmetric=True).crossover(WalkingStrategy(period=200, symmetric=True)).mutate().muscle_activations[10]
+# y = WalkingStrategy(period=200, symmetric=True).crossover(WalkingStrategy(period=200, symmetric=True)).mutate().muscle_activations[10]
+
+with open('population', 'rb') as file:
+    best_walking_strategy = pickle.load(file).walking_strategies[0]
+
+y = best_walking_strategy.muscle_activations[0]
 
 # plot lines
 plt.plot(x, y, label="original", lw = 1)
-plt.plot(x, np.roll(y, 100), label="fft", lw = 1.5)
+# plt.plot(x, np.roll(y, 100), label="fft", lw = 1.5)
 plt.legend()
 plt.show()

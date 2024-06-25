@@ -39,7 +39,7 @@ if __name__ == "__main__":
     executor = ProcessPoolExecutor(max_workers=len(population.walking_strategies))
 
     # shrink_growth_rate = 0.01
-    # mutation_rate = 0.5
+    mutation_rate = 0.01
     # mutation_coefficient = 0.01
 
     total_best_fitness_value = -1000
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         # eval population
 
         futures = [executor.submit(evaluate, i, walking_strategy) for i, walking_strategy in enumerate(population.walking_strategies)]
-        fitness_values = np.array([future.result() for future in futures])
+        fitness_values = np.round(np.array([future.result() for future in futures]), 2)
 
         current_best_fitness_value = fitness_values.max()
         if current_best_fitness_value > total_best_fitness_value + 0.01:
@@ -68,18 +68,18 @@ if __name__ == "__main__":
             iterations_without_fitness_improvement += 1
         if current_best_fitness_value > total_best_fitness_value:
             total_best_fitness_value = current_best_fitness_value
-        #
-        # if iterations_without_fitness_improvement > 30:
-        #     print('30 generations without improvement, increasing mutation rate')
-        #     # shrink_growth_rate += 0.01
-        #     mutation_rate += 0.1
-        #     # mutation_coefficient += 0.01
-        #     iterations_without_fitness_improvement = 0
-        # elif iterations_with_fitness_improvement > 0:
-        #     print('1 generation with improvement, decreasing mutation rate')
-        #     # shrink_growth_rate -= 0.01
-        #     mutation_rate -= 0.1
-        #     # mutation_coefficient -= 0.01
+
+        if iterations_without_fitness_improvement > 20:
+            print('30 generations without improvement, increasing mutation rate')
+            # shrink_growth_rate += 0.01
+            mutation_rate += 0.01
+            # mutation_coefficient += 0.01
+            iterations_without_fitness_improvement = 0
+        elif iterations_with_fitness_improvement > 0:
+            print('1 generation with improvement, decreasing mutation rate')
+            # shrink_growth_rate -= 0.01
+            mutation_rate -= 0.1
+            # mutation_coefficient -= 0.01
 
 
         # give a birth to a new population
@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
 
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
-        # mutation_rate = np.clip(mutation_rate, 0.1, 0.9)
+        mutation_rate = np.clip(mutation_rate, 0.01, 0.2)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
 
         fit_map = population.get_fitness_map(fitness_values)
@@ -111,7 +111,7 @@ if __name__ == "__main__":
             parent1, parent2 = population.select_parents(fit_map)
             new_walking_strategy = parent1.crossover(parent2)
 
-            new_walking_strategy = new_walking_strategy.mutate()
+            new_walking_strategy = new_walking_strategy.mutate(mutation_rate)
 
             new_walking_strategies.append(new_walking_strategy)
 

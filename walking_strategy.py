@@ -76,29 +76,37 @@ class WalkingStrategy:
             dna=self.dna[:switch_index] + other.dna[switch_index:]
         )
 
-    def mutate(self):
+    def mutate(self, mutation_rate):
         new_dna = copy.deepcopy(self.dna)
         for i in range(len(new_dna)):
             for j in range(len(new_dna[i])):
-                if np.random.uniform() < 0.05:
-                    new_dna[i][j] += 0.5 * np.random.normal()
+                if np.random.uniform() < mutation_rate:
+                    if isinstance(new_dna[i][j], complex):
+                        real_part_mutation = np.random.normal(0, 0.01 + 0.1 * np.abs(np.real(new_dna[i][j])))
+                        imag_part_mutation = np.random.normal(0, 0.01 + 0.1 * np.abs(np.imag(new_dna[i][j])))
+                        new_value = new_dna[i][j] + real_part_mutation + 1j * imag_part_mutation
+                        if j == 0:
+                            new_value = new_value.real + 0j
+                    else:
+                        new_value = new_dna[i][j] + np.random.normal(0, 0.01 + 0.1 * new_dna[i][j])
 
-            new_dna[i][0] = np.clip(np.abs(new_dna[i][0]), 0, 0.999999)
+                    new_dna[i][j] = new_value
 
-            if self.dna[i][0] < 0.5 <= new_dna[i][0]:
-                new_gene = np.fft.fft(np.clip(np.real(np.fft.ifft(new_dna[i][1:])), 0, 1))
-                new_gene = np.insert(new_gene, 0, new_dna[i][0] + 0j)
+            new_format_type = np.clip(np.abs(new_dna[i][0]), 0, 0.999999)
+
+            if np.abs(self.dna[i][0]) < 0.5 <= new_format_type:
+                new_gene = np.fft.fft(np.clip(new_dna[i][1:], 0, 1))
+                new_gene = np.insert(new_gene, 0, new_format_type + 0j)
                 new_dna[i] = new_gene
-            elif self.dna[i][0] >= 0.5 > new_dna[i][0]:
-                new_gene = np.fft.fft(np.clip(np.real(np.fft.ifft(new_dna[i][1:])), 0, 1))
-                new_gene = np.insert(new_gene, 0, new_dna[i][0] + 0j)
+            elif np.abs(self.dna[i][0]) >= 0.5 > new_format_type:
+                new_gene = np.clip(np.real(np.fft.ifft(new_dna[i][1:])), 0, 1)
+                new_gene = np.insert(new_gene, 0, new_format_type)
                 new_dna[i] = new_gene
-
-            if new_dna[i][0] < 0.5:
-                new_dna[i][1:] = np.clip(new_dna[i][1:], 0, 1)
+            elif new_format_type < 0.5:
+                new_dna[i][1:] = np.clip(new_dna[i][1:], 0, 0.999999)
             else:
-                new_gene = np.fft.fft(np.clip(np.real(np.fft.ifft(new_dna[i][1:])), 0, 1))
-                new_gene = np.insert(new_gene, 0, new_dna[i][0] + 0j)
+                new_gene = np.fft.fft(np.clip(np.real(np.fft.ifft(new_dna[i][1:])), 0, 0.999999))
+                new_gene = np.insert(new_gene, 0, new_format_type + 0j)
                 new_dna[i] = new_gene
 
         return WalkingStrategy(period=self.period, symmetric=self.symmetric, dna=new_dna)
