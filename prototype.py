@@ -78,7 +78,7 @@ if __name__ == "__main__":
         elif iterations_with_fitness_improvement > 0:
             print('1 generation with improvement, decreasing mutation rate')
             # shrink_growth_rate -= 0.01
-            mutation_rate -= 0.1
+            mutation_rate -= 0.01
             # mutation_coefficient -= 0.01
 
 
