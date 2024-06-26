@@ -41,8 +41,8 @@ if __name__ == "__main__":
     executor = ProcessPoolExecutor(max_workers=30)
 
     # shrink_growth_rate = 0.01
-    mutation_rate = 0.01
-    mutation_amount = 0.1
+    mutation_rate = 0.05
+    mutation_amount = 0.5
     # mutation_coefficient = 0.01
 
     total_best_fitness_value = -1000
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         if current_best_fitness_value > total_best_fitness_value:
             total_best_fitness_value = current_best_fitness_value
 
-        if iterations_without_fitness_improvement > 20:
+        if iterations_without_fitness_improvement > 10:
             print('30 generations without improvement, increasing mutation rate')
             # shrink_growth_rate += 0.01
             mutation_rate += 0.01

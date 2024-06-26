@@ -11,14 +11,14 @@ from walking_strategy_population import WalkingStrategyPopulation
 with open('population', 'rb') as file:
     best_walking_strategy = pickle.load(file).walking_strategies[0]
 
-env = SimEnv(visualize=True, difficulty=0)
+env = SimEnv(visualize=True)
 env.reset()
 
 total_reward = 0
 
-for sim_step in range(10000):
-    observation, reward, done, info = env.step(best_walking_strategy.get_muscle_activations(sim_step))
-    total_reward += reward
+for sim_step in range(500):
+    observation = env.step(best_walking_strategy.get_muscle_activations(sim_step))
+    # total_reward += reward
     # observation, reward, done, info = env.step(env.action_space.sample())
 
     # observation, reward, done, info = env.step([
@@ -45,7 +45,7 @@ for sim_step in range(10000):
     #     0,
     #     1
     # ])
-    if done:
-        break
+    # if done:
+    #     break
 
 print(f'{total_reward} for {sim_step+1} steps')
