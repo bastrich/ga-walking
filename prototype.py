@@ -8,6 +8,8 @@ from walking_strategy_population import WalkingStrategyPopulation
 
 from concurrent.futures import ProcessPoolExecutor
 
+import heapq
+
 import time
 
 period = 200
@@ -16,9 +18,9 @@ period = 200
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-# population = WalkingStrategyPopulation(period, size=30)
-with open('population', 'rb') as file:
-    population = pickle.load(file)
+population = WalkingStrategyPopulation(period, size=150)
+# with open('population', 'rb') as file:
+#     population = pickle.load(file)
 
 envs = [L2M2019Env(visualize=False, difficulty=0) for _ in range(len(population.walking_strategies))]
 
@@ -32,11 +34,11 @@ def evaluate(i, walking_strategy):
         total_reward += reward
         if done:
             break
-    return total_reward
+    return walking_strategy, np.round(total_reward, 2)
 
 if __name__ == "__main__":
 
-    executor = ProcessPoolExecutor(max_workers=len(population.walking_strategies))
+    executor = ProcessPoolExecutor(max_workers=30)
 
     # shrink_growth_rate = 0.01
     mutation_rate = 0.01
@@ -58,7 +60,8 @@ if __name__ == "__main__":
         # eval population
 
         futures = [executor.submit(evaluate, i, walking_strategy) for i, walking_strategy in enumerate(population.walking_strategies)]
-        fitness_values = np.round(np.array([future.result() for future in futures]), 2)
+        simulation_results = [future.result() for future in futures]
+        fitness_values = np.array([simulation_result[1] for simulation_result in simulation_results])
 
         current_best_fitness_value = fitness_values.max()
         if current_best_fitness_value > total_best_fitness_value + 0.01:
@@ -92,17 +95,12 @@ if __name__ == "__main__":
         if min_fitness < 0:
             fitness_values = fitness_values + np.abs(min_fitness)
 
+
+
         # preserve elites
-        max_fits = -np.partition(-fitness_values, 3)[:3]
-        elites_saved = 0
-        for i, walking_strategy in enumerate(population.walking_strategies):
-            if fitness_values[i] in max_fits:
-                new_walking_strategies.append(walking_strategy)
-                elites_saved += 1
-
-            if elites_saved == 3:
-                break
-
+        number_to_preserve = 20
+        preserved_walking_strategies = [simulation_result[0] for simulation_result in heapq.nlargest(number_to_preserve, simulation_results, key=lambda simulation_result: simulation_result[1])]
+        new_walking_strategies += preserved_walking_strategies
 
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
         mutation_rate = np.clip(mutation_rate, 0.01, 0.2)
@@ -111,7 +109,7 @@ if __name__ == "__main__":
 
         fit_map = population.get_fitness_map(fitness_values)
 
-        for _ in range(len(population.walking_strategies) - 3):
+        for _ in range(len(population.walking_strategies) - number_to_preserve):
             parent1, parent2 = population.select_parents(fit_map)
             new_walking_strategy = parent1.crossover(parent2)
 

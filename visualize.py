@@ -1,4 +1,5 @@
 from my_osim import L2M2019Env
+from sim_env import SimEnv
 import pickle
 from walking_strategy import WalkingStrategy
 from walking_strategy_population import WalkingStrategyPopulation
@@ -10,7 +11,7 @@ from walking_strategy_population import WalkingStrategyPopulation
 with open('population', 'rb') as file:
     best_walking_strategy = pickle.load(file).walking_strategies[0]
 
-env = L2M2019Env(visualize=True, difficulty=0)
+env = SimEnv(visualize=True, difficulty=0)
 env.reset()
 
 total_reward = 0

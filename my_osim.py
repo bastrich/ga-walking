@@ -854,12 +854,12 @@ class L2M2019Env(OsimEnv):
         projection_right_heel = np.dot(mid_hip_right_heel, hips_unit)
         projection_left_heel = np.dot(mid_hip_left_heel, hips_unit)
 
-        # if projection_right_heel < projection_left_heel: !!!!!!!!!!!!!!!!
-        #     # print('NOT crossing')
-        #     reward += 0.1
-        # elif projection_right_heel > projection_left_heel:
-        #     # print('crossing')
-        #     reward -= 0.1
+        if projection_right_heel < projection_left_heel:
+            # print('NOT crossing')
+            reward += 0.1
+        elif projection_right_heel > projection_left_heel:
+            # print('crossing')
+            reward -= 0.1
 
 
 
@@ -912,8 +912,9 @@ class L2M2019Env(OsimEnv):
 
         # footstep reward (when made a new step)
         if self.footstep['new']:
-            reward += 10 * self.d_reward['footstep']['del_t']
-            reward += self.delta_of_last_step
+            if self.delta_of_last_step > 0:
+                reward += 10 * self.d_reward['footstep']['del_t']
+            reward += 10 * self.delta_of_last_step
 
             # footstep reward: so that solution does not avoid making footsteps
             # scaled by del_t, so that solution does not get higher rewards by making unnecessary (small) steps

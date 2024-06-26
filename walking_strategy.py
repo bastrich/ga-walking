@@ -82,13 +82,13 @@ class WalkingStrategy:
             for j in range(len(new_dna[i])):
                 if np.random.uniform() < mutation_rate:
                     if isinstance(new_dna[i][j], complex):
-                        real_part_mutation = np.random.normal(0, 0.01 + mutation_amount * np.abs(np.real(new_dna[i][j])))
-                        imag_part_mutation = np.random.normal(0, 0.01 + mutation_amount * np.abs(np.imag(new_dna[i][j])))
+                        real_part_mutation = np.random.normal(0, max(0.1, mutation_amount * np.abs(np.real(new_dna[i][j]))))
+                        imag_part_mutation = np.random.normal(0, max(0.1, mutation_amount * np.abs(np.imag(new_dna[i][j]))))
                         new_value = new_dna[i][j] + real_part_mutation + 1j * imag_part_mutation
                         if j == 0:
                             new_value = new_value.real + 0j
                     else:
-                        new_value = new_dna[i][j] + np.random.normal(0, 0.01 + mutation_amount * np.abs(new_dna[i][j]))
+                        new_value = new_dna[i][j] + np.random.normal(0, max(0.1, mutation_amount * np.abs(new_dna[i][j])))
 
                     new_dna[i][j] = new_value
 
