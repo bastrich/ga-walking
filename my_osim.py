@@ -913,8 +913,7 @@ class L2M2019Env(OsimEnv):
         # footstep reward (when made a new step)
         if self.footstep['new']:
             reward += 10 * self.d_reward['footstep']['del_t']
-            if self.delta_of_last_step < 0:
-                reward += self.delta_of_last_step
+            reward += self.delta_of_last_step
 
             # footstep reward: so that solution does not avoid making footsteps
             # scaled by del_t, so that solution does not get higher rewards by making unnecessary (small) steps

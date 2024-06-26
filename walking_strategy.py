@@ -88,7 +88,7 @@ class WalkingStrategy:
                         if j == 0:
                             new_value = new_value.real + 0j
                     else:
-                        new_value = new_dna[i][j] + np.random.normal(0, 0.01 + mutation_amount * new_dna[i][j])
+                        new_value = new_dna[i][j] + np.random.normal(0, 0.01 + mutation_amount * np.abs(new_dna[i][j]))
 
                     new_dna[i][j] = new_value
 
