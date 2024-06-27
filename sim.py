@@ -28,7 +28,7 @@ class Sim:
 
             prev_state = current_state
 
-        if not self.is_failed(prev_state) and sim_step == number_of_steps - 1:
+        if not self.is_failed(prev_state) and sim_step >= number_of_steps - 1:
             fitness += 50
 
         return fitness, sim_step
@@ -110,12 +110,12 @@ class Sim:
 
         if projection_right_heel < projection_left_heel:
             # print('NOT crossing')
-            result += 0.1
+            result += 0.05
         elif projection_right_heel > projection_left_heel:
             # print('crossing')
             result -= 0.1
 
-        result += distance_traveled
+        result += 10 * distance_traveled
 
 
         #
@@ -164,7 +164,7 @@ class Sim:
         if self.footstep['new']:
             if self.fitness_helpers['footstep_delta_x'] > 0:
                 result += 10 * self.fitness_helpers['footstep_duration']
-            result += 10 * self.fitness_helpers['footstep_delta_x']
+            # result += 10 * self.fitness_helpers['footstep_delta_x']
             # reward += 10 * np.exp(self.delta_of_last_step)
 
             # panalize effort
@@ -177,4 +177,3 @@ class Sim:
 
         return result
 
-    # def footstep_delta_x(self, current_state):

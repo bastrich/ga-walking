@@ -29,13 +29,20 @@ def evaluate(i, walking_strategy):
     fitness, steps = sims[i].run(walking_strategy, sim_steps_per_iteration)
     return walking_strategy, np.round(fitness, 2)
 
+
+def give_birth_to_new_walking_strategy(walking_strategies, fit_map, mutation_rate, mutation_amount):
+    parent1, parent2 = np.random.choice(walking_strategies, size=2, p=fit_map)
+    new_walking_strategy = parent1.crossover(parent2)
+    new_walking_strategy = new_walking_strategy.mutate(mutation_rate, mutation_amount)
+    return new_walking_strategy
+
 if __name__ == "__main__":
 
     executor = ProcessPoolExecutor(max_workers=30)
 
     # shrink_growth_rate = 0.01
-    mutation_rate = 0.5
-    mutation_amount = 1.5
+    mutation_rate = 0.3
+    mutation_amount = 1
     # mutation_coefficient = 0.01
 
     total_best_fitness_value = -1000
@@ -100,17 +107,14 @@ if __name__ == "__main__":
         mutation_amount = np.clip(mutation_amount, 0.1, 3)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
 
-        fit_map = population.get_fitness_map(fitness_values)
+        fit_map = fitness_values / np.sum(fitness_values)
 
-        for _ in range(len(population.walking_strategies) - number_to_preserve):
-            parent1, parent2 = population.select_parents(fit_map)
-            new_walking_strategy = parent1.crossover(parent2)
 
-            new_walking_strategy = new_walking_strategy.mutate(mutation_rate, mutation_amount)
-
-            new_walking_strategies.append(new_walking_strategy)
+        new_walking_strategies_futures = [executor.submit(give_birth_to_new_walking_strategy, population.walking_strategies, fit_map, mutation_rate, mutation_amount) for _ in range(len(population.walking_strategies) - number_to_preserve)]
+        new_walking_strategies += [future.result() for future in new_walking_strategies_futures]
 
         population = WalkingStrategyPopulation(period, walking_strategies=new_walking_strategies)
+
         # save current population
         with open(f'population', 'wb') as file:
             pickle.dump(population, file)
