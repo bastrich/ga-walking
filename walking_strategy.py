@@ -29,8 +29,6 @@ class WalkingStrategy:
 
     @staticmethod
     def get_random_gene(period):
-        format_type = np.random.uniform(low=0.0, high=0.25)
-
         noise = PerlinNoise(octaves=np.random.uniform(low=0.4, high=5))
         number_of_values = period // 5
         muscle_activation = np.array([noise(i / number_of_values) for i in range(number_of_values)])
@@ -40,11 +38,15 @@ class WalkingStrategy:
         if min_value != max_value:
             muscle_activation = (muscle_activation - min_value) / (max_value - min_value)
 
-        return np.insert(muscle_activation, 0, format_type)
+        format_type = np.random.choice([0, 1])
+        if format_type == 0:
+            return np.insert(muscle_activation, 0, format_type)
+        else:
+            return np.insert(np.fft.fft(muscle_activation), 0, format_type + 0j)
 
     @staticmethod
     def calculate_muscle_activation(gene, period):
-        if gene[0] < 0.5:
+        if np.abs(gene[0]) < 0.5:
             return WalkingStrategy.calculate_direct_muscle_activation(gene[1:], period)
         else:
             return WalkingStrategy.calculate_fourier_muscle_activation(gene[1:], period)
@@ -81,7 +83,12 @@ class WalkingStrategy:
         for i in range(len(new_dna)):
             for j in range(len(new_dna[i])):
                 if np.random.uniform() < mutation_rate:
-                    if isinstance(new_dna[i][j], complex):
+                    if j == 0:
+                        if not isinstance(new_dna[i][j], complex):
+                            new_value = 1
+                        else:
+                            new_value = 0 + 0j
+                    elif isinstance(new_dna[i][j], complex):
                         real_part_mutation = np.random.normal(0, max(0.1, mutation_amount * np.abs(np.real(new_dna[i][j]))))
                         imag_part_mutation = np.random.normal(0, max(0.1, mutation_amount * np.abs(np.imag(new_dna[i][j]))))
                         new_value = new_dna[i][j] + real_part_mutation + 1j * imag_part_mutation
@@ -92,7 +99,7 @@ class WalkingStrategy:
 
                     new_dna[i][j] = new_value
 
-            new_format_type = np.clip(np.abs(new_dna[i][0]), 0, 0.999999)
+            new_format_type = np.abs(new_dna[i][0])
 
             if np.abs(self.dna[i][0]) < 0.5 <= new_format_type:
                 new_gene = np.fft.fft(np.clip(new_dna[i][1:], 0, 1))

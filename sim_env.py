@@ -5,7 +5,7 @@ import opensim
 import random
 
 
-class OsimModel(object):
+class OsimModel:
     stepsize = 0.01
 
     model = None
@@ -176,12 +176,6 @@ class SimEnv():
 
     LENGTH0 = 1
 
-    footstep = {}
-    footstep['n'] = 0
-    footstep['new'] = False
-    footstep['r_contact'] = 1
-    footstep['l_contact'] = 1
-
     dict_muscle = {
         'abd': 'HAB',
         'add': 'HAD',
@@ -275,11 +269,6 @@ class SimEnv():
     def reset(self):
         self.t = 0
 
-        self.footstep['n'] = 0
-        self.footstep['new'] = False
-        self.footstep['r_contact'] = 1
-        self.footstep['l_contact'] = 1
-
         self.last_x = 0
         self.delta_of_last_step = 0
 
@@ -334,24 +323,9 @@ class SimEnv():
         self.osim_model.actuate(action)
         self.osim_model.integrate()
 
-        self.update_footstep()
-
         return self.get_state_desc()
 
-    def update_footstep(self):
-        state_desc = self.get_state_desc()
 
-        # update contact
-        r_contact = True if state_desc['forces']['foot_r'][1] < -0.05*(self.MASS*self.G) else False
-        l_contact = True if state_desc['forces']['foot_l'][1] < -0.05*(self.MASS*self.G) else False
-
-        self.footstep['new'] = False
-        if (not self.footstep['r_contact'] and r_contact) or (not self.footstep['l_contact'] and l_contact):
-            self.footstep['new'] = True
-            self.footstep['n'] += 1
-
-        self.footstep['r_contact'] = r_contact
-        self.footstep['l_contact'] = l_contact
 
     def get_state_desc(self):
         return self.osim_model.get_state_desc()
