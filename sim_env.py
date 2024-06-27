@@ -149,26 +149,10 @@ class OsimModel(object):
             self.state_desc_istep = self.istep
         return self.state_desc
 
-    def set_strength(self, strength):
-        self.curforces = strength
-        for i in range(len(self.curforces)):
-            self.muscleSet.get(i).setMaxIsometricForce(self.curforces[i] * self.maxforces[i])
-
-    def set_integrator_accuracy(self, integrator_accuracy):
-        self.integrator_accuracy = integrator_accuracy
-
     def reset_manager(self):
         self.manager = opensim.Manager(self.model)
         self.manager.setIntegratorAccuracy(self.integrator_accuracy)
         self.manager.initialize(self.state)
-
-    def reset(self):
-        self.state = self.model.initializeState()
-        self.model.equilibrateMuscles(self.state)
-        self.state.setTime(0)
-        self.istep = 0
-
-        self.reset_manager()
 
     def get_state(self):
         return opensim.State(self.state)

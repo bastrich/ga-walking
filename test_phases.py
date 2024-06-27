@@ -59,7 +59,7 @@ x = [i for i in range(200)]
 with open('population', 'rb') as file:
     best_walking_strategy = pickle.load(file).walking_strategies[0]
 
-y = best_walking_strategy.muscle_activations[5]
+y = best_walking_strategy.muscle_activations[2]
 
 # plot lines
 plt.plot(x, y, label="original", lw = 1)
