@@ -20,7 +20,7 @@ class Sim:
 
             current_state = self.env.step(walking_strategy.get_muscle_activations(sim_step))
 
-            if current_state['body_pos']['pelvis'][1] < 0.6:
+            if self.is_failed(current_state):
                 break
 
             self.update_footstep(current_state)
@@ -28,7 +28,13 @@ class Sim:
 
             prev_state = current_state
 
+        if not self.is_failed(prev_state) and sim_step == number_of_steps - 1:
+            fitness += 50
+
         return fitness, sim_step
+
+    def is_failed(selfself, state):
+        return state['body_pos']['pelvis'][1] < 0.6
 
     def init_fitness_helpers(self):
         self.fitness_helpers['alive'] = 0.1
@@ -109,6 +115,7 @@ class Sim:
             # print('crossing')
             result -= 0.1
 
+        result += distance_traveled
 
 
         #
@@ -184,13 +191,5 @@ class Sim:
             self.fitness_helpers['footstep_duration'] = 0
             self.fitness_helpers['footstep_effort'] = 0
             self.fitness_helpers['footstep_delta_x'] = 0
-
-
-        # # success bonus
-        # if not self.is_done() and (self.osim_model.istep >= self.time_limit): #and self.failure_mode is 'success':
-        #     # retrieve reward (i.e. do not penalize for the simulation terminating in a middle of a step)
-        #     #reward_footstep_0 = self.d_reward['weight']['footstep']*self.d_reward['footstep']['del_t']
-        #     #reward += reward_footstep_0 + 100
-        #     reward += 10
 
         return result

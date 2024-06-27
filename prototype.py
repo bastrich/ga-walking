@@ -1,4 +1,4 @@
-from my_osim import L2M2019Env
+from sim import Sim
 import numpy as np
 import copy
 import pickle
@@ -18,31 +18,24 @@ period = 200
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-# population = WalkingStrategyPopulation(period, size=150)
-with open('population', 'rb') as file:
-    population = pickle.load(file)
+population = WalkingStrategyPopulation(period, size=150)
+# with open('population', 'rb') as file:
+#     population = pickle.load(file)
 
-envs = [L2M2019Env(visualize=False, difficulty=0) for _ in range(len(population.walking_strategies))]
+sims = [Sim(visualize=False) for _ in range(len(population.walking_strategies))]
 
 def evaluate(i, walking_strategy):
-    global envs
-    envs[i].reset()
-    total_reward = 0
-    for sim_step in range(sim_steps_per_iteration):
-        actions = walking_strategy.get_muscle_activations(sim_step)
-        observation, reward, done, info = envs[i].step(actions)
-        total_reward += reward
-        if done:
-            break
-    return walking_strategy, np.round(total_reward, 2)
+    global sims
+    fitness, steps = sims[i].run(walking_strategy, sim_steps_per_iteration)
+    return walking_strategy, np.round(fitness, 2)
 
 if __name__ == "__main__":
 
     executor = ProcessPoolExecutor(max_workers=30)
 
     # shrink_growth_rate = 0.01
-    mutation_rate = 0.05
-    mutation_amount = 0.5
+    mutation_rate = 0.5
+    mutation_amount = 1.5
     # mutation_coefficient = 0.01
 
     total_best_fitness_value = -1000
@@ -98,13 +91,13 @@ if __name__ == "__main__":
 
 
         # preserve elites
-        number_to_preserve = 20
+        number_to_preserve = 15
         preserved_walking_strategies = [simulation_result[0] for simulation_result in heapq.nlargest(number_to_preserve, simulation_results, key=lambda simulation_result: simulation_result[1])]
         new_walking_strategies += preserved_walking_strategies
 
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
-        mutation_rate = np.clip(mutation_rate, 0.01, 0.2)
-        mutation_amount = np.clip(mutation_amount, 0.1, 1)
+        mutation_rate = np.clip(mutation_rate, 0.01, 0.5)
+        mutation_amount = np.clip(mutation_amount, 0.1, 3)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
 
         fit_map = population.get_fitness_map(fitness_values)
