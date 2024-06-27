@@ -18,9 +18,9 @@ period = 200
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-population = WalkingStrategyPopulation(period, size=150)
-# with open('population', 'rb') as file:
-#     population = pickle.load(file)
+# population = WalkingStrategyPopulation(period, size=150)
+with open('population', 'rb') as file:
+    population = pickle.load(file)
 
 sims = [Sim(visualize=False) for _ in range(len(population.walking_strategies))]
 
@@ -69,14 +69,14 @@ if __name__ == "__main__":
         if iterations_without_fitness_improvement > 10:
             print('30 generations without improvement, increasing mutation rate')
             # shrink_growth_rate += 0.01
-            mutation_rate += 0.01
+            mutation_rate += 0.1
             mutation_amount += 0.1
             # mutation_coefficient += 0.01
             iterations_without_fitness_improvement = 0
         elif iterations_with_fitness_improvement > 2:
             print('1 generation with improvement, decreasing mutation rate')
             # shrink_growth_rate -= 0.01
-            mutation_rate -= 0.01
+            mutation_rate -= 0.1
             mutation_amount -= 0.1
             # mutation_coefficient -= 0.01
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         new_walking_strategies += preserved_walking_strategies
 
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
-        mutation_rate = np.clip(mutation_rate, 0.01, 0.5)
+        mutation_rate = np.clip(mutation_rate, 0.1, 1)
         mutation_amount = np.clip(mutation_amount, 0.1, 3)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
 

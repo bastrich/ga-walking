@@ -157,39 +157,24 @@ class Sim:
 
 
         # limit reward for big steps
-        # try to make shrink growth with amoubnt of coefficients
-        # delete creatures that are less than minimum from previous population
-        # sconstrain inital options to binary combinations of muscles activation
         # not minus small decrease in distance
-        # may be dynamic fitness function
         # penalize for up knee higher than pelvis
-        # increase population size and queue in thread pool
 
         # footstep reward (when made a new step)
         if self.footstep['new']:
             if self.fitness_helpers['footstep_delta_x'] > 0:
                 result += 10 * self.fitness_helpers['footstep_duration']
             result += 10 * self.fitness_helpers['footstep_delta_x']
-
-            # footstep reward: so that solution does not avoid making footsteps
-            # scaled by del_t, so that solution does not get higher rewards by making unnecessary (small) steps
-            # reward_footstep_0 = self.d_reward['weight']['footstep']*self.d_reward['footstep']['del_t']
-
-            # deviation from target velocity
-            # the average velocity a step (instead of instantaneous velocity) is used
-            # as velocity fluctuates within a step in normal human walking
-            #reward_footstep_v = -self.reward_w['v_tgt']*(self.footstep['del_vx']**2)
-            # reward_footstep_v = -self.d_reward['weight']['v_tgt']*np.linalg.norm(self.d_reward['footstep']['del_v'])/self.LENGTH0
-            # reward_footstep_v = 20 * self.last_x
-
+            # reward += 10 * np.exp(self.delta_of_last_step)
 
             # panalize effort
             result -= self.fitness_helpers['footstep_effort']
-            #
-            # reward += 10 * np.exp(self.delta_of_last_step)
-            #
+
+
             self.fitness_helpers['footstep_duration'] = 0
             self.fitness_helpers['footstep_effort'] = 0
             self.fitness_helpers['footstep_delta_x'] = 0
 
         return result
+
+    # def footstep_delta_x(self, current_state):
