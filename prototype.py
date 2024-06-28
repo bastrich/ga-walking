@@ -38,7 +38,8 @@ def give_birth_to_new_walking_strategy(walking_strategies, fit_map, mutation_rat
 
 if __name__ == "__main__":
 
-    executor = ProcessPoolExecutor(max_workers=30)
+    simulations_executor = ProcessPoolExecutor(max_workers=30)
+    populations_executor = ProcessPoolExecutor(max_workers=30)
 
     # shrink_growth_rate = 0.01
     mutation_rate = 0.3
@@ -59,7 +60,9 @@ if __name__ == "__main__":
 
         # eval population
 
-        futures = [executor.submit(evaluate, i, walking_strategy) for i, walking_strategy in enumerate(population.walking_strategies)]
+        print('Running simulations...')
+
+        futures = [simulations_executor.submit(evaluate, i, walking_strategy) for i, walking_strategy in enumerate(population.walking_strategies)]
         simulation_results = [future.result() for future in futures]
         fitness_values = np.array([simulation_result[1] for simulation_result in simulation_results])
 
@@ -95,7 +98,7 @@ if __name__ == "__main__":
         if min_fitness < 0:
             fitness_values = fitness_values + np.abs(min_fitness)
 
-
+        print('Selecting elites...')
 
         # preserve elites
         number_to_preserve = 15
@@ -109,8 +112,9 @@ if __name__ == "__main__":
 
         fit_map = fitness_values / np.sum(fitness_values)
 
+        print('Creating new population...')
 
-        new_walking_strategies_futures = [executor.submit(give_birth_to_new_walking_strategy, population.walking_strategies, fit_map, mutation_rate, mutation_amount) for _ in range(len(population.walking_strategies) - number_to_preserve)]
+        new_walking_strategies_futures = [populations_executor.submit(give_birth_to_new_walking_strategy, population.walking_strategies, fit_map, mutation_rate, mutation_amount) for _ in range(len(population.walking_strategies) - number_to_preserve)]
         new_walking_strategies += [future.result() for future in new_walking_strategies_futures]
 
         population = WalkingStrategyPopulation(period, walking_strategies=new_walking_strategies)
@@ -123,5 +127,6 @@ if __name__ == "__main__":
 
     print(f'Execution time: {(end_time - start_time) / 60} minutes')
 
-    executor.shutdown()
+    simulations_executor.shutdown()
+    populations_executor.shutdown()
 
