@@ -19,13 +19,11 @@ class OsimModel:
     state_desc_istep = None
     prev_state_desc = None
     state_desc = None
-    integrator_accuracy = None
 
     maxforces = []
     curforces = []
 
-    def __init__(self, model_path, visualize, integrator_accuracy = 5e-5):
-        self.integrator_accuracy = integrator_accuracy
+    def __init__(self, model_path, visualize):
         self.model = opensim.Model(model_path)
         self.model_state = self.model.initSystem()
         self.brain = opensim.PrescribedController()
@@ -151,7 +149,7 @@ class OsimModel:
 
     def reset_manager(self):
         self.manager = opensim.Manager(self.model)
-        self.manager.setIntegratorAccuracy(self.integrator_accuracy)
+        self.manager.setIntegratorAccuracy(0.001)
         self.manager.initialize(self.state)
 
     def get_state(self):
@@ -229,14 +227,13 @@ class SimEnv():
         'video.frames_per_second' : None
     }
 
-    def __init__(self, visualize=True, integrator_accuracy=5e-5, report=None):
+    def __init__(self, visualize=True, report=None):
 
         self.model_paths = {}
         self.model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_20170320.osim')
 
         self.visualize = visualize
-        self.integrator_accuracy = integrator_accuracy
-        self.osim_model = OsimModel(self.model_path, self.visualize, integrator_accuracy=self.integrator_accuracy)
+        self.osim_model = OsimModel(self.model_path, self.visualize)
 
 
         self.Fmax = {}

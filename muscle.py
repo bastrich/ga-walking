@@ -96,6 +96,10 @@ class Muscle:
                 else:
                     new_activations_dna[i] += np.random.normal(0, max(0.1, mutation_amount * np.abs(new_activations_dna[i])))
 
+        #????
+        if np.random.uniform() < 0.1 * mutation_rate:
+            new_activations_dna = np.roll(new_activations_dna, int(np.random.normal(0, 0.2 * self.period)))
+
         activations = new_activations_dna if self.activations_format == 'direct' else np.real(np.fft.ifft(new_activations_dna))
         activations = np.clip(activations, 0, 1)
 

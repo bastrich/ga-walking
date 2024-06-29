@@ -1,5 +1,6 @@
 from sim_env import SimEnv
 import numpy as np
+import time
 
 class Sim:
 
@@ -16,11 +17,14 @@ class Sim:
         self.init_fitness_helpers()
         fitness = 0
         prev_state = self.env.reset()
+
+        start_time = time.time()
+
         for sim_step in range(number_of_steps):
 
             current_state = self.env.step(walking_strategy.get_muscle_activations(sim_step))
 
-            if self.is_failed(current_state):
+            if self.is_failed(current_state) or time.time() - start_time > 10:
                 break
 
             self.update_footstep(current_state)
@@ -157,13 +161,16 @@ class Sim:
 
 
         # limit reward for big steps
-        # not minus small decrease in distance
-        # penalize for up knee higher than pelvis
+        # add np.roll mutation
+        ## add direction to fitness value
 
         # footstep reward (when made a new step)
         if self.footstep['new']:
             if self.fitness_helpers['footstep_delta_x'] > 0:
                 result += 10 * self.fitness_helpers['footstep_duration']
+                # step_size = np.abs(current_state['body_pos']['calcn_r'][0] - current_state['body_pos']['calcn_l'][0])
+                # result += 10 * np.exp(step_size)  #???
+                result += 10 * np.exp(self.fitness_helpers['footstep_delta_x'])
             # result += 10 * self.fitness_helpers['footstep_delta_x']
             # reward += 10 * np.exp(self.delta_of_last_step)
 

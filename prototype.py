@@ -18,9 +18,9 @@ period = 200
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-# population = WalkingStrategyPopulation(period, size=150)
-with open('population', 'rb') as file:
-    population = pickle.load(file)
+population = WalkingStrategyPopulation(period, size=150)
+# with open('population', 'rb') as file:
+#     population = pickle.load(file)
 
 sims = [Sim(visualize=False) for _ in range(len(population.walking_strategies))]
 

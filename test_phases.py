@@ -59,7 +59,7 @@ x = [i for i in range(200)]
 with open('population', 'rb') as file:
     best_walking_strategy = pickle.load(file).walking_strategies[0]
 
-y = best_walking_strategy.muscles[1].muscle_activations
+y = best_walking_strategy.muscles[5].muscle_activations
 
 # from muscle import Muscle
 #
