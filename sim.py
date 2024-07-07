@@ -8,15 +8,14 @@ class Sim:
         self.env = SimEnv(visualize=visualize)
         self.fitness_helpers = {}
         self.footstep = {}
-        self.footstep['n'] = 0
-        self.footstep['new'] = False
-        self.footstep['r_contact'] = 1
-        self.footstep['l_contact'] = 1
 
     def run(self, walking_strategy, number_of_steps=1000):
-        self.init_fitness_helpers()
-        fitness = 0
         prev_state = self.env.reset()
+
+        self.init_fitness_helpers()
+        self.init_footstep_info(prev_state)
+        fitness = 0
+
 
         start_time = time.time()
 
@@ -45,15 +44,44 @@ class Sim:
         self.fitness_helpers['footstep_effort'] = 0
         self.fitness_helpers['footstep_duration'] = 0
         self.fitness_helpers['footstep_delta_x'] = 0
+        self.fitness_helpers['footstep_delta_v'] = 0
+        self.fitness_helpers['footstep_side_error'] = 0
+        self.fitness_helpers['footstep_x_error'] = 0
+
+    def init_footstep_info(self, state):
+        self.footstep['n'] = 0
+        self.footstep['new'] = False
+        self.footstep['r_contact'] = 1
+        self.footstep['l_contact'] = 1
+        self.footstep['r_x'] = state['body_pos']['calcn_r'][0]
+        self.footstep['l_x'] = state['body_pos']['calcn_l'][0]
 
     def update_footstep(self, current_state):
         r_contact = True if current_state['forces']['foot_r'][1] < -0.05*(self.env.MASS*self.env.G) else False
         l_contact = True if current_state['forces']['foot_l'][1] < -0.05*(self.env.MASS*self.env.G) else False
+        r_x = current_state['body_pos']['calcn_r'][0]
+        l_x = current_state['body_pos']['calcn_l'][0]
 
         self.footstep['new'] = False
-        if (not self.footstep['r_contact'] and r_contact) or (not self.footstep['l_contact'] and l_contact):
-            self.footstep['new'] = True
-            self.footstep['n'] += 1
+
+        footstep_made = (not self.footstep['r_contact'] and r_contact and r_x > self.footstep['r_x'] and r_x > l_x >= self.footstep['l_x']) or (not self.footstep['l_contact'] and l_contact and l_x > self.footstep['l_x'] and l_x > r_x >= self.footstep['r_x'])
+        footstep_made = footstep_made and (current_state['body_pos']['calcn_r'][0] <= current_state['body_vel']['pelvis'][0] <= current_state['body_pos']['calcn_l'][0]
+                                           or current_state['body_pos']['calcn_r'][0] >= current_state['body_vel']['pelvis'][0] >= current_state['body_pos']['calcn_l'][0])
+        if footstep_made:
+            # if self.footstep['n'] > 0:
+            #     if self.footstep['r_x'] > self.footstep['l_x']:
+            #         footstep_made = l_x > r_x
+            #     elif self.footstep['r_x'] < self.footstep['l_x']:
+            #         footstep_made = r_x > l_x
+            #     else:
+            #         footstep_made = False
+
+            if footstep_made:
+                self.footstep['new'] = True
+                self.footstep['n'] += 1
+                self.footstep['r_x'] = r_x
+                self.footstep['l_x'] = l_x
+                print(f'new footstep - {self.footstep["n"]}')
 
         self.footstep['r_contact'] = r_contact
         self.footstep['l_contact'] = l_contact
@@ -77,25 +105,44 @@ class Sim:
         distance_traveled = current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]
         self.fitness_helpers['footstep_delta_x'] += distance_traveled
 
-        # reward += 40 * distance_traveled !!!!!!!
+        self.fitness_helpers['footstep_side_error'] += np.abs(current_state['body_vel']['pelvis'][2])
+        self.fitness_helpers['footstep_x_error'] += np.abs(distance_traveled) if distance_traveled < 0 else 0
+
+        result -= 10 * np.abs(distance_traveled) if distance_traveled < 0 else 0
+        result -= 10 * np.abs(current_state['body_vel']['pelvis'][2])
+
+        result += 30 * distance_traveled #!!!!!!!
 
         # reward from velocity (penalize from deviating from v_tgt)
 
         # p_body = [state_desc['body_pos']['pelvis'][0], -state_desc['body_pos']['pelvis'][2]]
-        # v_body = [state_desc['body_vel']['pelvis'][0], -state_desc['body_vel']['pelvis'][2]]
+        velocity = np.array([current_state['body_vel']['pelvis'][0], -current_state['body_vel']['pelvis'][2]])
+        # velocity_magnitude = np.linalg.norm(velocity)
+        # if velocity_magnitude != 0:
+        #     unit_velocity = velocity / velocity_magnitude
+        # else:
+        #     unit_velocity = 0
+
+        target_velocity = np.array([0.5, 0])
+
+        self.fitness_helpers['footstep_delta_v'] += (velocity - target_velocity)*dt
+
+
+        # print(unit_velocity)
+        # print(np.linalg.norm(unit_velocity))
         # v_tgt = self.vtgt.get_vtgt(p_body).T
 
         # self.d_reward['footstep']['del_v'] += (v_body - v_tgt)*dt
 
-        # prev_pelvis_head = np.array(self.get_prev_state_desc()['body_pos']['head']) - np.array(self.get_prev_state_desc()['body_pos']['pelvis'])
-        # prev_projection_pelvis_head = np.linalg.norm([prev_pelvis_head[0], prev_pelvis_head[2]])
-        # prev_pelvis_head_angle = np.arctan2(prev_projection_pelvis_head, prev_pelvis_head[1])
-        #
-        # pelvis_head = np.array(state_desc['body_pos']['head']) - np.array(state_desc['body_pos']['pelvis'])
-        # projection_pelvis_head = np.linalg.norm([pelvis_head[0], pelvis_head[2]])
-        # current_pelvis_head_angle = np.arctan2(projection_pelvis_head, pelvis_head[1])
+        prev_pelvis_head = np.array(prev_state['body_pos']['head']) - np.array(prev_state['body_pos']['pelvis'])
+        prev_projection_pelvis_head = np.linalg.norm([prev_pelvis_head[0], prev_pelvis_head[2]])
+        prev_pelvis_head_angle = np.arctan2(prev_projection_pelvis_head, prev_pelvis_head[1])
 
-        # reward += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle) !!!!!!!!!!
+        pelvis_head = np.array(current_state['body_pos']['head']) - np.array(current_state['body_pos']['pelvis'])
+        projection_pelvis_head = np.linalg.norm([pelvis_head[0], pelvis_head[2]])
+        current_pelvis_head_angle = np.arctan2(projection_pelvis_head, pelvis_head[1])
+
+        result += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle) #!!!!!!!!!!
 
         right_hip = np.array([current_state['body_pos']['femur_r'][0], current_state['body_pos']['femur_r'][2]])
         left_hip = np.array([current_state['body_pos']['femur_l'][0], current_state['body_pos']['femur_l'][2]])
@@ -114,12 +161,12 @@ class Sim:
 
         if projection_right_heel < projection_left_heel:
             # print('NOT crossing')
-            result += 0.05
+            result += 0.1
         elif projection_right_heel > projection_left_heel:
             # print('crossing')
             result -= 0.1
 
-        result += 10 * distance_traveled
+        # result += 10 * distance_traveled
 
 
         #
@@ -166,21 +213,32 @@ class Sim:
 
         # footstep reward (when made a new step)
         if self.footstep['new']:
-            if self.fitness_helpers['footstep_delta_x'] > 0:
-                result += 10 * self.fitness_helpers['footstep_duration']
+            # if self.fitness_helpers['footstep_delta_x'] > 0:
+            result += 50 * self.fitness_helpers['footstep_duration']
+            # result += 50
                 # step_size = np.abs(current_state['body_pos']['calcn_r'][0] - current_state['body_pos']['calcn_l'][0])
                 # result += 10 * np.exp(step_size)  #???
-                result += 10 * np.exp(self.fitness_helpers['footstep_delta_x'])
-            # result += 10 * self.fitness_helpers['footstep_delta_x']
+            # result += 100 * np.sign(self.fitness_helpers['footstep_delta_x']) * np.square(self.fitness_helpers['footstep_delta_x'])
+            # result += 10 * np.exp(current_state['body_vel']['pelvis'][0])
+            result += 100 * self.fitness_helpers['footstep_delta_x']
             # reward += 10 * np.exp(self.delta_of_last_step)
+
+            # result -= 10 * self.fitness_helpers['footstep_side_error'] * np.exp(self.fitness_helpers['footstep_side_error'])
+            # result -= 10 * self.fitness_helpers['footstep_x_error'] * np.exp(self.fitness_helpers['footstep_x_error'])
 
             # panalize effort
             result -= self.fitness_helpers['footstep_effort']
 
 
+            # result -= np.linalg.norm(self.fitness_helpers['footstep_delta_v'])
+
+
             self.fitness_helpers['footstep_duration'] = 0
             self.fitness_helpers['footstep_effort'] = 0
             self.fitness_helpers['footstep_delta_x'] = 0
+            self.fitness_helpers['footstep_delta_v'] = 0
+            self.fitness_helpers['footstep_side_error'] = 0
+            self.fitness_helpers['footstep_x_error'] = 0
 
         return result
 

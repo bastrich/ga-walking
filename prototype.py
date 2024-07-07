@@ -1,4 +1,4 @@
-from sim import Sim
+from test_sim import Sim
 import numpy as np
 import copy
 import pickle
@@ -18,16 +18,18 @@ period = 200
 iterations = 10000
 sim_steps_per_iteration = 1000
 
-population = WalkingStrategyPopulation(period, size=150)
-# with open('population', 'rb') as file:
-#     population = pickle.load(file)
+# population = WalkingStrategyPopulation(period, size=150)
+with open('population', 'rb') as file:
+    population = pickle.load(file)
 
 sims = [Sim(visualize=False) for _ in range(len(population.walking_strategies))]
 
 def evaluate(i, walking_strategy):
     global sims
     fitness, steps = sims[i].run(walking_strategy, sim_steps_per_iteration)
-    return walking_strategy, np.round(fitness, 2)
+    walking_strategy.evaluated_fitness = np.round(fitness, 2)
+    return walking_strategy
+    # if doesn't bacame worse, allow save new mutation'
 
 
 def give_birth_to_new_walking_strategy(walking_strategies, fit_map, mutation_rate, mutation_amount):
@@ -43,7 +45,7 @@ if __name__ == "__main__":
 
     # shrink_growth_rate = 0.01
     mutation_rate = 0.3
-    mutation_amount = 1
+    mutation_amount = 0.3
     # mutation_coefficient = 0.01
 
     total_best_fitness_value = -1000
@@ -63,8 +65,12 @@ if __name__ == "__main__":
         print('Running simulations...')
 
         futures = [simulations_executor.submit(evaluate, i, walking_strategy) for i, walking_strategy in enumerate(population.walking_strategies)]
-        simulation_results = [future.result() for future in futures]
-        fitness_values = np.array([simulation_result[1] for simulation_result in simulation_results])
+        walking_strategies = [future.result() for future in futures]
+        fitness_values = np.array([walking_strategy.evaluated_fitness for walking_strategy in walking_strategies])
+
+        # save current population
+        with open(f'population', 'wb') as file:
+            pickle.dump(population, file)
 
         current_best_fitness_value = fitness_values.max()
         if current_best_fitness_value > total_best_fitness_value + 0.01:
@@ -76,17 +82,17 @@ if __name__ == "__main__":
         if current_best_fitness_value > total_best_fitness_value:
             total_best_fitness_value = current_best_fitness_value
 
-        if iterations_without_fitness_improvement > 10:
+        if iterations_without_fitness_improvement > 5:
             print('30 generations without improvement, increasing mutation rate')
             # shrink_growth_rate += 0.01
-            mutation_rate += 0.1
+            mutation_rate += 0.05
             mutation_amount += 0.1
             # mutation_coefficient += 0.01
             iterations_without_fitness_improvement = 0
         elif iterations_with_fitness_improvement > 2:
             print('1 generation with improvement, decreasing mutation rate')
             # shrink_growth_rate -= 0.01
-            mutation_rate -= 0.1
+            mutation_rate -= 0.05
             mutation_amount -= 0.1
             # mutation_coefficient -= 0.01
 
@@ -101,14 +107,20 @@ if __name__ == "__main__":
         print('Selecting elites...')
 
         # preserve elites
-        number_to_preserve = 15
-        preserved_walking_strategies = [simulation_result[0] for simulation_result in heapq.nlargest(number_to_preserve, simulation_results, key=lambda simulation_result: simulation_result[1])]
+        number_to_preserve = 20
+        preserved_walking_strategies = [walking_strategy for walking_strategy in heapq.nlargest(number_to_preserve, walking_strategies, key=lambda walking_strategy: walking_strategy.evaluated_fitness)]
+        # np.random.shuffle(preserved_walking_strategies)
         new_walking_strategies += preserved_walking_strategies
 
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
-        mutation_rate = np.clip(mutation_rate, 0.1, 1)
+        mutation_rate = np.clip(mutation_rate, 0.05, 1.05)
+        # mutation_amount = np.clip(mutation_amount, 0.1, 3)
         mutation_amount = np.clip(mutation_amount, 0.1, 3)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
+
+        # preserve elites with mutation
+        # preserved_walking_strategies_with_mutation = [walking_strategy.mutate(mutation_rate, mutation_amount) for walking_strategy in preserved_walking_strategies]
+        # new_walking_strategies += preserved_walking_strategies_with_mutation
 
         fit_map = fitness_values / np.sum(fitness_values)
 
@@ -119,9 +131,7 @@ if __name__ == "__main__":
 
         population = WalkingStrategyPopulation(period, walking_strategies=new_walking_strategies)
 
-        # save current population
-        with open(f'population', 'wb') as file:
-            pickle.dump(population, file)
+
 
     end_time = time.time()
 

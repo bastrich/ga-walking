@@ -217,15 +217,8 @@ class SimEnv():
     verbose = False
 
     visualize = False
-    spec = None
-    time_limit = 1e10
 
     model_path = None # os.path.join(os.path.dirname(__file__), '../models/MODEL_NAME.osim')
-
-    metadata = {
-        'render.modes': ['human'],
-        'video.frames_per_second' : None
-    }
 
     def __init__(self, visualize=True, report=None):
 
@@ -248,8 +241,6 @@ class SimEnv():
                 lopt = muscle.getOptimalFiberLength()
                 self.Fmax[leg][MUS] = muscle.getMaxIsometricForce()
                 self.lopt[leg][MUS] = muscle.getOptimalFiberLength()
-
-        self.time_limit = 1000
 
         if report:
             bufsize = 0

@@ -5,3 +5,4 @@ activate uol-final
 pip install osim-rl
 pip install scipy
 pip install perlin_noise
+pip install coverage

@@ -56,22 +56,43 @@ x = [i for i in range(200)]
 
 # y = WalkingStrategy(period=200, symmetric=True).crossover(WalkingStrategy(period=200, symmetric=True)).mutate().muscle_activations[10]
 
-with open('population', 'rb') as file:
-    best_walking_strategy = pickle.load(file).walking_strategies[0]
-
-y = best_walking_strategy.muscles[5].muscle_activations
-
-# from muscle import Muscle
+# with open('population', 'rb') as file:
+#     best_walking_strategy = pickle.load(file).walking_strategies[0]
 #
-# muscle = Muscle(200)
-# y1 = [muscle.get_muscle_activation(i) for i in range(200)]
-# for i in range(10):
-#     muscle = muscle.mutate(0.5, 1.5)
+# y1 = best_walking_strategy.muscles[3].activations
+#
+# muscle = best_walking_strategy.muscles[3]
+# for i in range(100):
+#     muscle = muscle.mutate(0.3, 0.3)
 # y2 = [muscle.get_muscle_activation(i) for i in range(200)]
+
+from simple_muscle import Muscle
+
+# muscle = Muscle(200)
+muscle = WalkingStrategy.generate_muscle(200, 7)
+y1 = [muscle.get_muscle_activation(i) for i in range(200)]
+f = muscle.fourier_coefficients[0]
+for i in range(100):
+    muscle = muscle.mutate(0.3, 0.3)
+y2 = [muscle.get_muscle_activation(i) for i in range(200)]
+
+# noise = PerlinNoise(octaves=np.random.uniform(low=0.4, high=1))
+# y1 = np.array([noise(i / (200 // 5)) for i in range(200 // 5)])
+#
+# min_value = np.min(y1)
+# max_value = np.max(y1)
+# if min_value != max_value:
+#     y1 = (y1 - min_value) / (max_value - min_value)
+#
+# fft = np.fft.fft(y1)
+# #
+# y2 = (np.real(fft[0]) + np.array([np.sum([np.real(fft[i + 1]) * np.cos((i + 1) * 2 * np.pi / 40 * j) - np.imag(fft[i + 1]) * np.sin((i + 1) * 2 * np.pi / 40 * j) for i in range(len(fft) - 1)]) for j in range(40)])) / 40
 
 
 # plot lines
-plt.plot(x, y, label="original", lw = 2)
-# plt.plot(x, y2, label="mutated", lw = 1.5)
+plt.plot(x, y1, label="original", lw = 2)
+plt.plot(x, y2, label="mu/tated", lw = 1.5)
 plt.legend()
 plt.show()
+
+print(f)

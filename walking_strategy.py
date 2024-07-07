@@ -1,5 +1,5 @@
 import numpy as np
-from muscle import Muscle
+from simple_muscle import Muscle
 
 class WalkingStrategy:
     def __init__(self, period, muscles=None):
@@ -7,7 +7,21 @@ class WalkingStrategy:
         if muscles is not None:
             self.muscles = muscles
         else:
-            self.muscles = [Muscle(period) for _ in range(11)]
+            self.muscles = [self.generate_muscle(period, i) for i in range(11)]
+        self.evaluated_fitness = 0
+
+    @staticmethod
+    def generate_muscle(period, i):
+        if i in [2, 5, 10]:
+            activations = np.array([100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0]) / 100
+            return Muscle(period, np.fft.fft(activations)[:Muscle.PRECISION])
+
+        if i == 9:
+            activations = np.array( [10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0]) / 100
+            return Muscle(period, np.fft.fft(activations)[:Muscle.PRECISION])
+
+        return Muscle(period)
+
 
     def mutate(self, mutation_rate, mutation_amount):
         return WalkingStrategy(

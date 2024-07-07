@@ -1,4 +1,6 @@
 from walking_strategy import WalkingStrategy
+import numpy as np
+
 class WalkingStrategyPopulation:
     def __init__(self, period, **kwargs):
         walking_strategies = kwargs.get('walking_strategies')
@@ -12,3 +14,4 @@ class WalkingStrategyPopulation:
             return
 
         raise Exception('Wrong arguments')
+
