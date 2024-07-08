@@ -1,4 +1,4 @@
-from test_sim import Sim
+from sim import Sim
 import numpy as np
 import copy
 import pickle
@@ -22,7 +22,7 @@ sim_steps_per_iteration = 1000
 with open('population', 'rb') as file:
     population = pickle.load(file)
 
-sims = [Sim(visualize=False) for _ in range(len(population.walking_strategies))]
+sims = [Sim('2D', False) for _ in range(len(population.walking_strategies))]
 
 def evaluate(i, walking_strategy):
     global sims

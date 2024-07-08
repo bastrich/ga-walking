@@ -202,8 +202,8 @@ class SimEnv():
         0.94, # pelvis height
         0*np.pi/180, # trunk lean
         0*np.pi/180, # [right] hip adduct
-        0*np.pi/180, # hip flex
-        0*np.pi/180, # knee extend
+        -40*np.pi/180, # hip flex
+        -80*np.pi/180, # knee extend
         0*np.pi/180, # ankle flex
         0*np.pi/180, # [left] hip adduct
         0*np.pi/180, # hip flex
@@ -213,21 +213,20 @@ class SimEnv():
 
     observation_space = None
     osim_model = None
-    istep = 0
     verbose = False
 
     visualize = False
 
-    model_path = None # os.path.join(os.path.dirname(__file__), '../models/MODEL_NAME.osim')
-
-    def __init__(self, visualize=True, report=None):
-
-        self.model_paths = {}
-        self.model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_20170320.osim')
+    def __init__(self, mode, visualize):
+        if mode == '3D':
+            model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_20170320.osim')
+        elif mode == '2D':
+            model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_planar_20170320.osim')
+        else:
+            raise ValueError('Invalid mode')
 
         self.visualize = visualize
-        self.osim_model = OsimModel(self.model_path, self.visualize)
-
+        self.osim_model = OsimModel(model_path, self.visualize)
 
         self.Fmax = {}
         self.lopt = {}
@@ -241,12 +240,6 @@ class SimEnv():
                 lopt = muscle.getOptimalFiberLength()
                 self.Fmax[leg][MUS] = muscle.getMaxIsometricForce()
                 self.lopt[leg][MUS] = muscle.getOptimalFiberLength()
-
-        if report:
-            bufsize = 0
-            self.observations_file = open('%s-obs.csv' % (report,),'w', bufsize)
-            self.actions_file = open('%s-act.csv' % (report,),'w', bufsize)
-            self.get_headers()
 
         self.last_x = 0
         self.delta_of_last_step = 0

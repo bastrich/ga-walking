@@ -2,7 +2,7 @@
 import pickle
 from walking_strategy import WalkingStrategy
 from walking_strategy_population import WalkingStrategyPopulation
-from test_sim import Sim
+from sim import Sim
 import numpy as np
 
 # visualize the best
@@ -37,7 +37,7 @@ best_walking_strategy = population.walking_strategies[0]
 
 
 
-sim = Sim(visualize=True)
+sim = Sim(mode='2D', visualize=True)
 total_reward, sim_steps = sim.run(best_walking_strategy)
 
 print(f'{total_reward} for {sim_steps} steps')
