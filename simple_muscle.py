@@ -43,7 +43,8 @@ class Muscle:
         if min_value != max_value:
             activations = (activations - min_value) / (max_value - min_value)
 
-        activations = np.random.uniform(1, 2) * (np.clip(activations - 0.5 * np.average(activations), 0, 1))
+# np.random.uniform(1, 2) *
+        activations = np.random.uniform(1, 2) *(np.clip(activations - 0.8 * np.average(activations), 0, 1))
 
         return np.fft.fft(activations)[:self.precision]
 
@@ -80,8 +81,6 @@ class Muscle:
                     new_fourier_coefficients[i] *= 1 / (1 + np.abs(min_value))
                 elif max_value > 1:
                     new_fourier_coefficients[i] *= 1 / np.abs(max_value)
-
-
 
 
             if i != 0 and np.random.uniform() < mutation_rate:
