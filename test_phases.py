@@ -59,7 +59,9 @@ x = [i for i in range(200)]
 # with open('population', 'rb') as file:
 #     best_walking_strategy = pickle.load(file).walking_strategies[0]
 #
-# y1 = best_walking_strategy.muscles[3].activations
+# y1 = best_walking_strategy.muscles[2].activations
+# best_walking_strategy.muscles[0].change_precision(10)
+# y2 = best_walking_strategy.muscles[0].activations
 #
 # muscle = best_walking_strategy.muscles[3]
 # for i in range(100):
@@ -68,13 +70,13 @@ x = [i for i in range(200)]
 
 from simple_muscle import Muscle
 
-# muscle = Muscle(200)
-muscle = WalkingStrategy.generate_muscle(200, 7)
-y1 = [muscle.get_muscle_activation(i) for i in range(200)]
-f = muscle.fourier_coefficients[0]
-for i in range(100):
-    muscle = muscle.mutate(0.3, 0.3)
-y2 = [muscle.get_muscle_activation(i) for i in range(200)]
+walking_strategy = WalkingStrategy(200)
+y1 = [walking_strategy.muscles[2].get_muscle_activation(i) for i in range(200)]
+for i in range(1000):
+    walking_strategy.muscles[2] = walking_strategy.muscles[2].mutate(0.3, 0.3)
+# muscle = Muscle(period=200, precision=5, fourier_coefficients=[np.real(fc) + 0j for fc in muscle.fourier_coefficients])
+#
+y2 = [walking_strategy.muscles[2].get_muscle_activation(i) for i in range(200)]
 
 # noise = PerlinNoise(octaves=np.random.uniform(low=0.4, high=1))
 # y1 = np.array([noise(i / (200 // 5)) for i in range(200 // 5)])
@@ -91,8 +93,7 @@ y2 = [muscle.get_muscle_activation(i) for i in range(200)]
 
 # plot lines
 plt.plot(x, y1, label="original", lw = 2)
-plt.plot(x, y2, label="mu/tated", lw = 1.5)
+plt.plot(x, y2, label="mutated", lw = 1.5)
 plt.legend()
 plt.show()
 
-print(f)

@@ -35,7 +35,7 @@ with open('population', 'rb') as file:
 best_walking_strategy = population.walking_strategies[0]
 # best_walking_strategy = best_walking_strategy.mutate(0.3, 0.3).mutate(0.3, 0.3).mutate(0.3, 0.3).mutate(0.3, 0.3).mutate(0.3, 0.3)
 
-
+# best_walking_strategy.change_precision(5)
 
 sim = Sim(mode='2D', visualize=True)
 total_reward, sim_steps = sim.run(best_walking_strategy)

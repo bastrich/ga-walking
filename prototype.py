@@ -16,11 +16,14 @@ period = 200
 
 
 iterations = 10000
-sim_steps_per_iteration = 1000
+sim_steps_per_iteration = 500
 
-# population = WalkingStrategyPopulation(period, size=150)
-with open('population', 'rb') as file:
-    population = pickle.load(file)
+population = WalkingStrategyPopulation(period, size=150)
+# with open('population', 'rb') as file:
+#     population = pickle.load(file)
+
+# for walking_strategy in population.walking_strategies:
+#     walking_strategy.change_precision(5)
 
 sims = [Sim('2D', False) for _ in range(len(population.walking_strategies))]
 
@@ -86,14 +89,14 @@ if __name__ == "__main__":
             print('30 generations without improvement, increasing mutation rate')
             # shrink_growth_rate += 0.01
             mutation_rate += 0.05
-            mutation_amount += 0.1
+            mutation_amount += 0.05
             # mutation_coefficient += 0.01
             iterations_without_fitness_improvement = 0
         elif iterations_with_fitness_improvement > 2:
             print('1 generation with improvement, decreasing mutation rate')
             # shrink_growth_rate -= 0.01
             mutation_rate -= 0.05
-            mutation_amount -= 0.1
+            mutation_amount -= 0.05
             # mutation_coefficient -= 0.01
 
 
@@ -115,7 +118,7 @@ if __name__ == "__main__":
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
         mutation_rate = np.clip(mutation_rate, 0.05, 1.05)
         # mutation_amount = np.clip(mutation_amount, 0.1, 3)
-        mutation_amount = np.clip(mutation_amount, 0.1, 3)
+        mutation_amount = np.clip(mutation_amount, 0.05, 1.05)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
 
         # preserve elites with mutation

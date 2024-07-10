@@ -12,15 +12,15 @@ class WalkingStrategy:
 
     @staticmethod
     def generate_muscle(period, i):
-        if i in [2, 5, 10]:
-            activations = np.array([100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0]) / 100
-            return Muscle(period, np.fft.fft(activations)[:Muscle.PRECISION])
+        # if i in [2, 5, 10]:
+        #     activations = np.array([100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0]) / 100
+        #     return Muscle(period=period, fourier_coefficients=np.fft.fft(activations)[:5])
+        #
+        # if i == 9:
+        #     activations = np.array( [10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0]) / 100
+        #     return Muscle(period=period, fourier_coefficients=np.fft.fft(activations)[:5])
 
-        if i == 9:
-            activations = np.array( [10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0]) / 100
-            return Muscle(period, np.fft.fft(activations)[:Muscle.PRECISION])
-
-        return Muscle(period)
+        return Muscle(period=period, precision=5)
 
 
     def mutate(self, mutation_rate, mutation_amount):
@@ -36,6 +36,10 @@ class WalkingStrategy:
             period=self.period,
             muscles=self.muscles[:switch_index] + other.muscles[switch_index:]
         )
+
+    def change_precision(self, precision):
+        for muscle in self.muscles:
+            muscle.change_precision(precision)
 
     def get_muscle_activations(self, time):
         return ([muscle.get_muscle_activation(time) for muscle in self.muscles] +

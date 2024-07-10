@@ -24,7 +24,8 @@ class Sim:
 
             current_state = self.env.step(walking_strategy.get_muscle_activations(sim_step))
 
-            if self.is_failed(current_state) or (time.time() - start_time > 10 and not self.visualize):
+            # if self.is_failed(current_state) or (time.time() - start_time > 10 and not self.visualize):
+            if self.is_failed(current_state) or time.time() - start_time > 10:
                 break
 
             self.update_footstep(current_state)
@@ -34,8 +35,8 @@ class Sim:
 
             # time.sleep(0.1)
 
-        if not self.is_failed(prev_state) and sim_step >= number_of_steps - 1:
-            fitness += 50
+        # if not self.is_failed(prev_state) and sim_step >= number_of_steps - 1:
+        #     fitness += 50
 
         return fitness, sim_step
 
@@ -254,6 +255,8 @@ class Sim:
 
         # footstep reward (when made a new step)
         if self.footstep['new']:
+            result += 20
+
             # if self.fitness_helpers['footstep_delta_x'] > 0:
             result += 10 * self.fitness_helpers['footstep_duration']
             # result += 50
