@@ -12,20 +12,22 @@ import heapq
 
 import time
 
-period = 200
+# period = 150
 
 
 iterations = 10000
 sim_steps_per_iteration = 500
 
-population = WalkingStrategyPopulation(period, size=150)
-# with open('population', 'rb') as file:
-#     population = pickle.load(file)
+# population = WalkingStrategyPopulation(size=150)
+with open('population', 'rb') as file:
+    population = pickle.load(file)
+
+# population.walking_strategies = [walking_strategy.with_precision(10).with_period(200) for walking_strategy in population.walking_strategies]
 
 # for walking_strategy in population.walking_strategies:
-#     walking_strategy.change_precision(5)
+#     walking_strategy.change_precision(10)
 
-sims = [Sim('2D', False) for _ in range(len(population.walking_strategies))]
+sims = [Sim('3D', False) for _ in range(len(population.walking_strategies))]
 
 def evaluate(i, walking_strategy):
     global sims
@@ -85,7 +87,7 @@ if __name__ == "__main__":
         if current_best_fitness_value > total_best_fitness_value:
             total_best_fitness_value = current_best_fitness_value
 
-        if iterations_without_fitness_improvement > 5:
+        if iterations_without_fitness_improvement > 10:
             print('30 generations without improvement, increasing mutation rate')
             # shrink_growth_rate += 0.01
             mutation_rate += 0.05
@@ -116,9 +118,9 @@ if __name__ == "__main__":
         new_walking_strategies += preserved_walking_strategies
 
         # shrink_growth_rate = np.clip(shrink_growth_rate, 0.01, 0.1)
-        mutation_rate = np.clip(mutation_rate, 0.05, 1.05)
+        mutation_rate = np.clip(mutation_rate, 0.05, 1)
         # mutation_amount = np.clip(mutation_amount, 0.1, 3)
-        mutation_amount = np.clip(mutation_amount, 0.05, 1.05)
+        mutation_amount = np.clip(mutation_amount, 0.05, 1)
         # mutation_coefficient = np.clip(mutation_coefficient, 0.1, 5)
 
         # preserve elites with mutation
@@ -132,7 +134,7 @@ if __name__ == "__main__":
         new_walking_strategies_futures = [populations_executor.submit(give_birth_to_new_walking_strategy, population.walking_strategies, fit_map, mutation_rate, mutation_amount) for _ in range(len(population.walking_strategies) - number_to_preserve)]
         new_walking_strategies += [future.result() for future in new_walking_strategies_futures]
 
-        population = WalkingStrategyPopulation(period, walking_strategies=new_walking_strategies)
+        population = WalkingStrategyPopulation(walking_strategies=new_walking_strategies)
 
 
 

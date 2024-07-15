@@ -202,8 +202,10 @@ class SimEnv():
         0.94, # pelvis height
         0*np.pi/180, # trunk lean
         0*np.pi/180, # [right] hip adduct
-        -40*np.pi/180, # hip flex
-        -80*np.pi/180, # knee extend
+        0*np.pi/180, # hip flex
+        0*np.pi/180, # knee extend
+        # -40 * np.pi / 180,  # hip flex
+        # -80 * np.pi / 180,  # knee extend
         0*np.pi/180, # ankle flex
         0*np.pi/180, # [left] hip adduct
         0*np.pi/180, # hip flex

@@ -11,7 +11,9 @@ import numpy as np
 import time
 
 # create data
-x = [i for i in range(200)]
+x1 = [i for i in range(200)]
+x2 = [i for i in range(250)]
+
 
 # with open('population', 'rb') as file:
 #     walking_strategy = pickle.load(file).walking_strategies[0]
@@ -56,10 +58,19 @@ x = [i for i in range(200)]
 
 # y = WalkingStrategy(period=200, symmetric=True).crossover(WalkingStrategy(period=200, symmetric=True)).mutate().muscle_activations[10]
 
-# with open('population', 'rb') as file:
-#     best_walking_strategy = pickle.load(file).walking_strategies[0]
+with open('population', 'rb') as file:
+    best_walking_strategy = pickle.load(file).walking_strategies[0]
+
+# best_walking_strategy = best_walking_strategy.with_period(150)
 #
-# y1 = best_walking_strategy.muscles[2].activations
+x1 = [i for i in range(best_walking_strategy.period)]
+y1 = best_walking_strategy.muscles[7].activations
+# best_walking_strategy.muscles[0].change_precision(10)
+# for i in range(1000):
+#     best_walking_strategy.muscles[0] = best_walking_strategy.muscles[0].mutate(0.3, 0.3)
+
+# y2 = [best_walking_strategy.muscles[0].with_period(150).get_muscle_activation(i) for i in range(150)]
+
 # best_walking_strategy.muscles[0].change_precision(10)
 # y2 = best_walking_strategy.muscles[0].activations
 #
@@ -70,13 +81,15 @@ x = [i for i in range(200)]
 
 from simple_muscle import Muscle
 
-walking_strategy = WalkingStrategy(200)
-y1 = [walking_strategy.muscles[2].get_muscle_activation(i) for i in range(200)]
-for i in range(1000):
-    walking_strategy.muscles[2] = walking_strategy.muscles[2].mutate(0.3, 0.3)
-# muscle = Muscle(period=200, precision=5, fourier_coefficients=[np.real(fc) + 0j for fc in muscle.fourier_coefficients])
+# walking_strategy = WalkingStrategy(200)
+# y1 = [walking_strategy.muscles[2].get_muscle_activation(i) for i in range(walking_strategy.period)]
+# x1 = [i for i in range(walking_strategy.period)]
+# for i in range(100):
+#     walking_strategy.muscles[2] = walking_strategy.muscles[2].mutate(0.3, 0.3)
+# # muscle = Muscle(period=200, precision=5, fourier_coefficients=[np.real(fc) + 0j for fc in muscle.fourier_coefficients])
 #
-y2 = [walking_strategy.muscles[2].get_muscle_activation(i) for i in range(200)]
+# y2 = [walking_strategy.muscles[2].get_muscle_activation(i) for i in range(walking_strategy.period)]
+# x2 = [i for i in range(walking_strategy.period)]
 
 # noise = PerlinNoise(octaves=np.random.uniform(low=0.4, high=1))
 # y1 = np.array([noise(i / (200 // 5)) for i in range(200 // 5)])
@@ -92,8 +105,8 @@ y2 = [walking_strategy.muscles[2].get_muscle_activation(i) for i in range(200)]
 
 
 # plot lines
-plt.plot(x, y1, label="original", lw = 2)
-plt.plot(x, y2, label="mutated", lw = 1.5)
+plt.plot(x1, y1, label="original", lw = 2)
+# plt.plot(x2, y2, label="mutated", lw = 1.5)
 plt.legend()
 plt.show()
 

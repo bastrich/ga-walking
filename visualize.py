@@ -4,6 +4,7 @@ from walking_strategy import WalkingStrategy
 from walking_strategy_population import WalkingStrategyPopulation
 from sim import Sim
 import numpy as np
+from simple_muscle import Muscle
 
 # visualize the best
 # with open('best-0', 'rb') as file:
@@ -33,11 +34,18 @@ with open('population', 'rb') as file:
 # best_walking_strategy = best_walking_strategy.mutate(0.3, 0.3).mutate(0.3, 0.3).mutate(0.3, 0.3).mutate(0.3, 0.3).mutate(0.3, 0.3)
 
 best_walking_strategy = population.walking_strategies[0]
+
+# activations = np.array([100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) / 100
+# # activations = np.repeat([80], 40) / 100
+# best_walking_strategy.muscles[0] = Muscle(period=200, fourier_coefficients=np.fft.fft(activations)[:5])
+
+
+
 # best_walking_strategy = best_walking_strategy.mutate(0.3, 0.3).mutate(0.3, 0.3).mutate(0.3, 0.3).mutate(0.3, 0.3).mutate(0.3, 0.3)
 
 # best_walking_strategy.change_precision(5)
 
-sim = Sim(mode='2D', visualize=True)
+sim = Sim(mode='3D', visualize=True)
 total_reward, sim_steps = sim.run(best_walking_strategy)
 
 print(f'{total_reward} for {sim_steps} steps')

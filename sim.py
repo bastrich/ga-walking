@@ -6,6 +6,7 @@ class Sim:
 
     def __init__(self, mode, visualize):
         self.visualize = visualize
+        self.mode = mode
         self.env = SimEnv(mode, visualize)
         self.fitness_helpers = {}
         self.footstep = {}
@@ -48,7 +49,7 @@ class Sim:
         self.fitness_helpers['footstep_effort'] = 0
         self.fitness_helpers['footstep_duration'] = 0
         self.fitness_helpers['footstep_delta_x'] = 0
-        self.fitness_helpers['footstep_delta_v'] = 0
+        self.fitness_helpers['footstep_delta_v'] = np.array([0.0, 0.0])
         self.fitness_helpers['footstep_side_error'] = 0
         self.fitness_helpers['footstep_x_error'] = 0
 
@@ -84,7 +85,7 @@ class Sim:
             self.footstep['n'] += 1
             self.footstep['r_x'] = r_x
             self.footstep['l_x'] = l_x
-            print(f'new footstep - {self.footstep["n"]}')
+            # print(f'new footstep - {self.footstep["n"]}')
 
 
         self.footstep['r_contact'] = r_contact
@@ -130,13 +131,12 @@ class Sim:
 
     def calculate_current_fitness(self, prev_state, current_state):
         result = 0
+        # result += self.fitness_helpers['alive']
+        result += 0.01
 
         dt = self.env.osim_model.stepsize
 
-        # alive fitness to search for success
-        result += self.fitness_helpers['alive']
 
-        # effort ~ muscle fatigue ~ (muscle activation)^2
         ACT2 = 0
         for muscle in current_state['muscles'].keys():
             ACT2 += np.square(current_state['muscles'][muscle]['activation'])
@@ -147,13 +147,14 @@ class Sim:
         distance_traveled = current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]
         self.fitness_helpers['footstep_delta_x'] += distance_traveled
 
-        self.fitness_helpers['footstep_side_error'] += np.abs(current_state['body_vel']['pelvis'][2])
-        self.fitness_helpers['footstep_x_error'] += np.abs(distance_traveled) if distance_traveled < 0 else 0
+        # self.fitness_helpers['footstep_side_error'] += np.abs(current_state['body_vel']['pelvis'][2])
+        # self.fitness_helpers['footstep_x_error'] += np.abs(distance_traveled) if distance_traveled < 0 else 0
 
         # result -= 10 * np.abs(distance_traveled) if distance_traveled < 0 else 0
         # result -= 10 * np.abs(current_state['body_vel']['pelvis'][2])
 
-        result += 10 * distance_traveled #!!!!!!!
+        # result += 10 * distance_traveled #!!!!!!!
+        result += 10 * distance_traveled * np.abs(distance_traveled) / np.linalg.norm(np.array([current_state['body_pos']['pelvis'][0], current_state['body_pos']['pelvis'][2]]) - np.array([prev_state['body_pos']['pelvis'][0], prev_state['body_pos']['pelvis'][2]])) #!!!!!!!
 
         # reward from velocity (penalize from deviating from v_tgt)
 
@@ -165,7 +166,7 @@ class Sim:
         # else:
         #     unit_velocity = 0
 
-        target_velocity = np.array([0.5, 0])
+        target_velocity = np.array([1.4, 0])
 
         self.fitness_helpers['footstep_delta_v'] += (velocity - target_velocity)*dt
 
@@ -186,27 +187,28 @@ class Sim:
 
         # result += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle) #!!!!!!!!!!
 
-        # right_hip = np.array([current_state['body_pos']['femur_r'][0], current_state['body_pos']['femur_r'][2]])
-        # left_hip = np.array([current_state['body_pos']['femur_l'][0], current_state['body_pos']['femur_l'][2]])
-        # right_heel = np.array([current_state['body_pos']['calcn_r'][0], current_state['body_pos']['calcn_r'][2]])
-        # left_heel = np.array([current_state['body_pos']['calcn_l'][0], current_state['body_pos']['calcn_l'][2]])
-        #
-        # hips = left_hip - right_hip
-        # hips_unit = hips / np.linalg.norm(hips)
-        # mid_hip = (left_hip + right_hip) / 2
-        # mid_hip_right_heel = right_heel - mid_hip
-        # mid_hip_left_heel = left_heel - mid_hip
-        #
-        # # Находим проекции векторов mid_C и mid_D на единичный вектор направления AB
-        # projection_right_heel = np.dot(mid_hip_right_heel, hips_unit)
-        # projection_left_heel = np.dot(mid_hip_left_heel, hips_unit)
-        #
-        # if projection_right_heel < projection_left_heel:
-        #     # print('NOT crossing')
-        #     result += 0.1
-        # elif projection_right_heel > projection_left_heel:
-        #     # print('crossing')
-        #     result -= 0.1
+        if self.mode == '3D':
+            right_hip = np.array([current_state['body_pos']['femur_r'][0], current_state['body_pos']['femur_r'][2]])
+            left_hip = np.array([current_state['body_pos']['femur_l'][0], current_state['body_pos']['femur_l'][2]])
+            right_heel = np.array([current_state['body_pos']['calcn_r'][0], current_state['body_pos']['calcn_r'][2]])
+            left_heel = np.array([current_state['body_pos']['calcn_l'][0], current_state['body_pos']['calcn_l'][2]])
+
+            hips = left_hip - right_hip
+            hips_unit = hips / np.linalg.norm(hips)
+            mid_hip = (left_hip + right_hip) / 2
+            mid_hip_right_heel = right_heel - mid_hip
+            mid_hip_left_heel = left_heel - mid_hip
+
+            projection_right_heel = np.dot(mid_hip_right_heel, hips_unit)
+            projection_left_heel = np.dot(mid_hip_left_heel, hips_unit)
+
+            if projection_right_heel < projection_left_heel:
+                # print('NOT crossing')
+                # result += 0.1
+                a = 5
+            elif projection_right_heel > projection_left_heel:
+                # print('crossing')
+                result -= 1
 
         # result += 10 * distance_traveled
 
@@ -247,13 +249,14 @@ class Sim:
         # elif 0 <= a/b <= 1 or 0 <= c/b <= 1:
         #     legs_crossing = True
 
-
-
         # limit reward for big steps
         # add np.roll mutation
         ## add direction to fitness value
 
         # footstep reward (when made a new step)
+
+
+
         if self.footstep['new']:
             result += 20
 
@@ -276,11 +279,14 @@ class Sim:
 
             # result -= np.linalg.norm(self.fitness_helpers['footstep_delta_v'])
 
+            # if self.mode == '3D':
+            #     result -= 10 * np.linalg.norm(self.fitness_helpers['footstep_delta_v'])
+
 
             self.fitness_helpers['footstep_duration'] = 0
             self.fitness_helpers['footstep_effort'] = 0
             self.fitness_helpers['footstep_delta_x'] = 0
-            self.fitness_helpers['footstep_delta_v'] = 0
+            self.fitness_helpers['footstep_delta_v'] = np.array([0.0, 0.0])
             self.fitness_helpers['footstep_side_error'] = 0
             self.fitness_helpers['footstep_x_error'] = 0
 
