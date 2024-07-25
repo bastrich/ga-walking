@@ -202,10 +202,10 @@ class SimEnv():
         0.94, # pelvis height
         0*np.pi/180, # trunk lean
         0*np.pi/180, # [right] hip adduct
-        0*np.pi/180, # hip flex
-        0*np.pi/180, # knee extend
-        # -40 * np.pi / 180,  # hip flex
-        # -80 * np.pi / 180,  # knee extend
+        # 0*np.pi/180, # hip flex
+        # 0*np.pi/180, # knee extend
+        -40 * np.pi / 180,  # hip flex
+        -80 * np.pi / 180,  # knee extend
         0*np.pi/180, # ankle flex
         0*np.pi/180, # [left] hip adduct
         0*np.pi/180, # hip flex
@@ -221,7 +221,7 @@ class SimEnv():
 
     def __init__(self, mode, visualize):
         if mode == '3D':
-            model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_20170320.osim')
+            model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_20170320_helper.osim')
         elif mode == '2D':
             model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_planar_20170320.osim')
         else:

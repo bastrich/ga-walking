@@ -7,40 +7,35 @@ import copy
 class Muscle:
     DISCRETIZATION = 5
 
-    def __init__(self, period, precision=None, fourier_coefficients=None):
+    def __init__(self, period, fourier_coefficients=None, precision=None):
         self.period = period
-
-        if precision is not None:
-            self.precision = precision
-        else:
-            self.precision = len(fourier_coefficients)
 
         if fourier_coefficients is not None:
             self.fourier_coefficients = fourier_coefficients
         else:
-            self.fourier_coefficients = self.generate_random_fourier_coefficients(self.period)
+            self.fourier_coefficients = self.generate_random_fourier_coefficients(self.period, precision)
 
         self.activations = self.calculate_activations(self.fourier_coefficients, self.period)
 
     def with_precision(self, precision):
-        if precision == self.precision:
+        if precision == len(self.fourier_coefficients):
             return self
 
         if precision > len(self.fourier_coefficients):
-            new_fourier_coefficients = np.pad(self.fourier_coefficients, (0, self.precision - len(self.fourier_coefficients)), 'constant')
+            new_fourier_coefficients = np.pad(self.fourier_coefficients, (0, precision - len(self.fourier_coefficients)), 'constant')
         else:
             new_fourier_coefficients = self.fourier_coefficients[:precision]
 
-        return Muscle(period=self.period, precision=precision, fourier_coefficients=new_fourier_coefficients)
+        return Muscle(period=self.period, fourier_coefficients=new_fourier_coefficients)
 
     def with_period(self, period):
         if period == self.period:
             return self
 
         new_fourier_coefficients = self.fourier_coefficients * (period // self.DISCRETIZATION) / (self.period // self.DISCRETIZATION)
-        return Muscle(period=period, precision=self.precision, fourier_coefficients=new_fourier_coefficients)
+        return Muscle(period=period, fourier_coefficients=new_fourier_coefficients)
 
-    def generate_random_fourier_coefficients(self, period):
+    def generate_random_fourier_coefficients(self, period, precision):
         noise = PerlinNoise(octaves=np.random.uniform(low=0.4, high=3))
         activations = np.array([noise(i / (period // self.DISCRETIZATION)) for i in range(period // self.DISCRETIZATION)])
 
@@ -52,7 +47,7 @@ class Muscle:
 # np.random.uniform(1, 2) *
         activations = np.random.uniform(1, 2) * (np.clip(activations - 0.8 * np.average(activations), 0, 1))
 
-        return np.fft.fft(activations)[:self.precision]
+        return np.fft.fft(activations)[:precision]
 
     def calculate_activations(self, fourier_coefficients, period):
         signal = np.real(np.fft.ifft(np.pad(fourier_coefficients, (0, period // self.DISCRETIZATION - len(fourier_coefficients)), 'constant')))

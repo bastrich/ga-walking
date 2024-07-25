@@ -64,7 +64,7 @@ with open('population', 'rb') as file:
 # best_walking_strategy = best_walking_strategy.with_period(150)
 #
 x1 = [i for i in range(best_walking_strategy.period)]
-y1 = best_walking_strategy.muscles[7].activations
+y1 = best_walking_strategy.muscles[2].activations
 # best_walking_strategy.muscles[0].change_precision(10)
 # for i in range(1000):
 #     best_walking_strategy.muscles[0] = best_walking_strategy.muscles[0].mutate(0.3, 0.3)

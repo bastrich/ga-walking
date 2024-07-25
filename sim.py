@@ -30,7 +30,7 @@ class Sim:
                 break
 
             self.update_footstep(current_state)
-            fitness += self.calculate_current_fitness(prev_state, current_state)
+            fitness += self.calculate_current_fitness(prev_state, current_state, walking_strategy.period)
 
             prev_state = current_state
 
@@ -129,10 +129,10 @@ class Sim:
 
         return result
 
-    def calculate_current_fitness(self, prev_state, current_state):
+    def calculate_current_fitness(self, prev_state, current_state, period):
         result = 0
         # result += self.fitness_helpers['alive']
-        result += 0.01
+        result += 0.1
 
         dt = self.env.osim_model.stepsize
 
@@ -260,27 +260,21 @@ class Sim:
         if self.footstep['new']:
             result += 20
 
-            # if self.fitness_helpers['footstep_delta_x'] > 0:
-            result += 10 * self.fitness_helpers['footstep_duration']
-            # result += 50
-                # step_size = np.abs(current_state['body_pos']['calcn_r'][0] - current_state['body_pos']['calcn_l'][0])
-                # result += 10 * np.exp(step_size)  #???
-            # result += 100 * np.sign(self.fitness_helpers['footstep_delta_x']) * np.square(self.fitness_helpers['footstep_delta_x'])
-            # result += 10 * np.exp(current_state['body_vel']['pelvis'][0])
-            # result += 100 * self.fitness_helpers['footstep_delta_x']
-            # reward += 10 * np.exp(self.delta_of_last_step)
+            if self.footstep['n'] == 1:
+                if self.fitness_helpers['footstep_duration'] < 0.8 * period // 4 * dt:
+                    result += 10 * self.fitness_helpers['footstep_duration']
+                else:
+                    result += 10 * 0.8 * period // 4 * dt
+            elif self.footstep['n'] > 1:
+                if self.fitness_helpers['footstep_duration'] < 0.8 * period // 2 * dt:
+                    result += 10 * self.fitness_helpers['footstep_duration']
+                else:
+                    result += 10 * 0.8 * period // 2 * dt
 
-            # result -= 10 * self.fitness_helpers['footstep_side_error'] * np.exp(self.fitness_helpers['footstep_side_error'])
-            # result -= 10 * self.fitness_helpers['footstep_x_error'] * np.exp(self.fitness_helpers['footstep_x_error'])
 
             # panalize effort
             result -= self.fitness_helpers['footstep_effort']
 
-
-            # result -= np.linalg.norm(self.fitness_helpers['footstep_delta_v'])
-
-            # if self.mode == '3D':
-            #     result -= 10 * np.linalg.norm(self.fitness_helpers['footstep_delta_v'])
 
 
             self.fitness_helpers['footstep_duration'] = 0

@@ -3,10 +3,18 @@ from simple_muscle import Muscle
 
 class WalkingStrategy:
 
-    PERIODS = [120, 160, 200, 240, 320, 400]
-    PRECISION = 16
+    PERIODS = [120, 160, 200, 240]
+    PRECISION = 20
 
-    def __init__(self, period, muscles=None):
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        if 'precision' not in state:
+            self.precision = WalkingStrategy.PRECISION
+
+        self.muscles = [muscle.with_precision(self.precision) if len(muscle.fourier_coefficients) != self.precision else muscle for muscle in state['muscles']]
+
+    def __init__(self, period, precision=PRECISION, muscles=None):
         if period is not None:
             self.period = period
         else:
@@ -18,7 +26,7 @@ class WalkingStrategy:
             self.muscles = [self.generate_muscle(self.period, i) for i in range(11)]
 
         self.evaluated_fitness = 0
-        self.precision = WalkingStrategy.PRECISION
+        self.precision = precision
 
     @staticmethod
     def generate_muscle(period, i):
@@ -47,6 +55,7 @@ class WalkingStrategy:
 
         return WalkingStrategy(
             period=new_period,
+            precision=self.precision,
             muscles=new_muscles
         )
 
@@ -54,36 +63,37 @@ class WalkingStrategy:
         new_period = np.random.choice([self.period, other.period])
 
         switch_index = np.random.randint(0, len(self.muscles) * self.precision + 1)
-        muscles = []
+        new_muscles = []
         for i in range(len(self.muscles)):
             if i < switch_index // self.precision:
-                muscles.append(self.muscles[i])
+                new_muscles.append(self.muscles[i].with_period(new_period))
             elif i > switch_index // self.precision:
-                muscles.append(other.muscles[i])
+                new_muscles.append(other.muscles[i].with_period(new_period))
             else:
-                muscles.append(
+                new_muscles.append(
                     Muscle(
                         period=new_period,
-                        precision=self.precision,
                         fourier_coefficients=np.concatenate((self.muscles[i].fourier_coefficients[:(switch_index - i * self.precision)], other.muscles[i].fourier_coefficients[(switch_index - i * self.precision):]))
                     )
                 )
 
         return WalkingStrategy(
             period=new_period,
-            muscles=muscles
+            precision=self.precision,
+            muscles=new_muscles
         )
 
     def with_precision(self, precision):
-        # TODO ADD self.precision
         return WalkingStrategy(
             period=self.period,
+            precision=self.precision,
             muscles=[muscle.with_precision(precision) for muscle in self.muscles]
         )
 
     def with_period(self, period):
         return WalkingStrategy(
             period=period,
+            precision=self.precision,
             muscles=[muscle.with_period(period) for muscle in self.muscles]
         )
 
