@@ -16,7 +16,7 @@ import time
 
 
 iterations = 10000
-sim_steps_per_iteration = 500
+sim_steps_per_iteration = 1000
 
 # population = WalkingStrategyPopulation(size=150)
 with open('population', 'rb') as file:
