@@ -221,7 +221,7 @@ class SimEnv():
 
     def __init__(self, mode, visualize):
         if mode == '3D':
-            model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_20170320_helper.osim')
+            model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_20170320.osim')
         elif mode == '2D':
             model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_planar_20170320.osim')
         else:
