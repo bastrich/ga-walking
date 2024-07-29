@@ -1,0 +1,14 @@
+name: ga-walking-test
+channels:
+  - opensim-org
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - opensim=4.5.1=py310np125
+  - numpy
+  - scipy
+  - coverage
+  - pip
+  - pip:
+      - perlin_noise

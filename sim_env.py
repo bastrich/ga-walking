@@ -44,7 +44,7 @@ class OsimModel:
         for j in range(self.muscleSet.getSize()):
             func = opensim.Constant(1.0)
             self.brain.addActuator(self.muscleSet.get(j))
-            self.brain.prescribeControlForActuator(j, func)
+            self.brain.prescribeControlForActuator(self.muscleSet.get(j).getName(), func)
 
             self.maxforces.append(self.muscleSet.get(j).getMaxIsometricForce())
             self.curforces.append(1.0)
@@ -221,9 +221,9 @@ class SimEnv():
 
     def __init__(self, mode, visualize):
         if mode == '3D':
-            model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_20170320.osim')
+            model_path = os.path.join(os.path.dirname(__file__), 'models/3d.osim')
         elif mode == '2D':
-            model_path = os.path.join(os.path.dirname(__file__), 'models/gait14dof22musc_planar_20170320.osim')
+            model_path = os.path.join(os.path.dirname(__file__), 'models/2d.osim')
         else:
             raise ValueError('Invalid mode')
 
