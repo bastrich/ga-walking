@@ -1,4 +1,4 @@
-name: ga-walking-test
+name: ga-walking
 channels:
   - opensim-org
   - conda-forge
