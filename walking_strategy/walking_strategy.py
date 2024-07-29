@@ -1,5 +1,5 @@
 import numpy as np
-from simple_muscle import Muscle
+from muscles.simple_muscle import Muscle
 
 class WalkingStrategy:
 

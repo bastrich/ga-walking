@@ -1,17 +1,8 @@
 import pickle
 
-import matplotlib.pyplot as plt
-
-from perlin_noise import PerlinNoise
-
-from walking_strategy import WalkingStrategy
-
 import numpy as np
 
-import time
-
-
-with open('population', 'rb') as file:
+with open('../results/population', 'rb') as file:
     population = pickle.load(file)
 
 for walking_strategy in population.walking_strategies:

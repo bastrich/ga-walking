@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, call
-from muscle import Muscle
+from muscles.muscle import Muscle
 
 
 class TestMyClass(unittest.TestCase):

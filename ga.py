@@ -1,10 +1,7 @@
-from sim import Sim
+from sim.sim import Sim
 import numpy as np
-import copy
 import pickle
-import random
-from walking_strategy import WalkingStrategy
-from walking_strategy_population import WalkingStrategyPopulation
+from walking_strategy.walking_strategy_population import WalkingStrategyPopulation
 
 from concurrent.futures import ProcessPoolExecutor
 
@@ -19,7 +16,7 @@ iterations = 10000
 sim_steps_per_iteration = 1000
 
 # population = WalkingStrategyPopulation(size=150)
-with open('population', 'rb') as file:
+with open('results/population', 'rb') as file:
     population = pickle.load(file)
 
 # population.walking_strategies = [walking_strategy.with_precision(10).with_period(200) for walking_strategy in population.walking_strategies]
@@ -74,7 +71,7 @@ if __name__ == "__main__":
         fitness_values = np.array([walking_strategy.evaluated_fitness for walking_strategy in walking_strategies])
 
         # save current population
-        with open(f'population', 'wb') as file:
+        with open(f'results/population', 'wb') as file:
             pickle.dump(population, file)
 
         current_best_fitness_value = fitness_values.max()

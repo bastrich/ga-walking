@@ -39,7 +39,7 @@ class Sim:
         # if not self.is_failed(prev_state) and sim_step >= number_of_steps - 1:
         #     fitness += 50
 
-        return fitness, sim_step
+        return fitness, sim_step + 1
 
     def is_failed(selfself, state):
         return state['body_pos']['pelvis'][1] < 0.6

@@ -1,16 +1,12 @@
 
 import pickle
-from walking_strategy import WalkingStrategy
-from walking_strategy_population import WalkingStrategyPopulation
 from sim import Sim
-import numpy as np
-from simple_muscle import Muscle
 
 # visualize the best
 # with open('best-0', 'rb') as file:
 #     best_walking_strategy = pickle.load(file)
 
-with open('population', 'rb') as file:
+with open('results/population', 'rb') as file:
     population = pickle.load(file)
 #
 # fitness_values = np.array([ws.evaluated_fitness for ws in population.walking_strategies])
@@ -45,7 +41,7 @@ best_walking_strategy = population.walking_strategies[0]
 
 # best_walking_strategy.change_precision(5)
 
-sim = Sim(mode='3D', visualize=True)
+sim = Sim(mode='2D', visualize=True)
 total_reward, sim_steps = sim.run(best_walking_strategy)
 
 print(f'{total_reward} for {sim_steps} steps')

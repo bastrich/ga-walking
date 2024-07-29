@@ -2,14 +2,6 @@ import pickle
 
 import matplotlib.pyplot as plt
 
-from perlin_noise import PerlinNoise
-
-from walking_strategy import WalkingStrategy
-
-import numpy as np
-
-import time
-
 # create data
 x1 = [i for i in range(200)]
 x2 = [i for i in range(250)]
@@ -58,7 +50,7 @@ x2 = [i for i in range(250)]
 
 # y = WalkingStrategy(period=200, symmetric=True).crossover(WalkingStrategy(period=200, symmetric=True)).mutate().muscle_activations[10]
 
-with open('population', 'rb') as file:
+with open('../results/population', 'rb') as file:
     best_walking_strategy = pickle.load(file).walking_strategies[0]
 
 # best_walking_strategy = best_walking_strategy.with_period(150)
@@ -78,8 +70,6 @@ y1 = best_walking_strategy.muscles[2].activations
 # for i in range(100):
 #     muscle = muscle.mutate(0.3, 0.3)
 # y2 = [muscle.get_muscle_activation(i) for i in range(200)]
-
-from simple_muscle import Muscle
 
 # walking_strategy = WalkingStrategy(200)
 # y1 = [walking_strategy.muscles[2].get_muscle_activation(i) for i in range(walking_strategy.period)]
