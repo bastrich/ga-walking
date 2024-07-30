@@ -9,6 +9,7 @@ dependencies:
   - numpy
   - scipy
   - coverage
+  - matplotlib
   - pip
   - pip:
-      - perlin_noise
+    - perlin_noise
