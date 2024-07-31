@@ -12,7 +12,7 @@ class Muscle:
     SAMPLING_INTERVALS = [5, 10, 20, 40]
     PRECISIONS = [5, 10, 20, 40]
 
-    def __init__(self, period, type=None, sampling_interval=None, precision=None, components=None):
+    def __init__(self, period, type=None, sampling_interval=None, precision=None, components=None, generation='perlin'):
         if period in self.PERIODS:
             self.period = period
         else:
@@ -44,7 +44,7 @@ class Muscle:
             raise ValueError(f'precision must be one of {self.PRECISIONS}')
 
         if components is None:
-            self.components = self.generate_random_components(self.period, self.type, self.sampling_interval, self.precision)
+            self.components = self.generate_random_components(self.period, self.type, self.sampling_interval, self.precision, generation)
         elif self.precision != len(components):
             raise ValueError('length of components must be equal to precision')
         elif self.type == 'direct' and isinstance(components[0], complex) or self.type == 'fourier' and isinstance(components[0], float):
@@ -55,18 +55,23 @@ class Muscle:
         self.activations = self.calculate_activations(self.type, self.components, self.period, self.sampling_interval)
 
     @staticmethod
-    def generate_random_components(period, type, sampling_interval, precision):
-        noise = PerlinNoise(octaves=np.random.uniform(low=0.4, high=3))
-        activations = np.array([noise(i / (period // sampling_interval)) for i in range(period // sampling_interval)])
+    def generate_random_components(period, type, sampling_interval, precision, generation):
+        if generation == 'perlin':
+            noise = PerlinNoise(octaves=np.random.uniform(low=0.4, high=3))
+            activations = np.array([noise(i / (period // sampling_interval)) for i in range(period // sampling_interval)])
 
-        min_value = np.min(activations)
-        max_value = np.max(activations)
-        if min_value != max_value:
-            activations = (activations - min_value) / (max_value - min_value)
+            min_value = np.min(activations)
+            max_value = np.max(activations)
+            if min_value != max_value:
+                activations = (activations - min_value) / (max_value - min_value)
+            else:
+                raise ValueError('Issues in random genotype generation')
+
+            activations = np.random.uniform(1, 2) * np.clip(activations - 0.8 * np.average(activations), 0, 1)
+        elif generation == 'random':
+            activations = np.random.uniform(size=period // sampling_interval)
         else:
-            raise ValueError('Issues in random genotype generation')
-
-        activations = np.random.uniform(1, 2) * np.clip(activations - 0.8 * np.average(activations), 0, 1)
+            raise ValueError(f'generation must be perlin or random')
 
         if type == 'fourier':
             return np.fft.fft(activations)[:precision]
@@ -93,6 +98,61 @@ class Muscle:
 
     def get_activation(self, time):
         return self.activations[time % self.period]
+
+    def with_period(self, period):
+        if period == self.period:
+            return self
+
+        if period not in self.PERIODS:
+            raise ValueError(f'period must be one of {self.PERIODS}')
+
+        new_sampling_interval = self.sampling_interval
+
+        if self.type == 'fourier':
+            new_components = self.components * (period // self.sampling_interval) / (self.period // self.sampling_interval)
+            if period // self.sampling_interval < self.precision:
+                new_sampling_interval = next(reversed(list(filter(lambda si: period // si >= self.precision, self.SAMPLING_INTERVALS))))
+        else:
+            new_components = self.components
+            if period // self.sampling_interval < self.precision:
+                new_sampling_interval = next(reversed(list(filter(lambda si: period // si >= self.precision, self.SAMPLING_INTERVALS))))
+
+        return Muscle(
+            period=period,
+            type=self.type,
+            sampling_interval=new_sampling_interval,
+            precision=self.precision,
+            components=new_components
+        )
+
+    def mutate_type(self):
+        if self.type == 'fourier':
+            new_type = 'direct'
+
+            new_components = np.real(np.fft.ifft(np.pad(self.components, (0, self.period // self.sampling_interval - len(self.components)), 'constant')))
+
+            current_indexes = np.arange(len(new_components))
+            new_indexes = np.linspace(0, len(new_components) - 1, self.precision)
+            interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
+            new_components = interpolator(new_indexes)
+        else:
+            new_type = 'fourier'
+
+            current_indexes = np.arange(len(self.components))
+            new_indexes = np.linspace(0, len(self.components) - 1, self.period // self.sampling_interval)
+            interpolator = interp1d(current_indexes, self.components, kind='quadratic', fill_value='extrapolate')
+            new_components = interpolator(new_indexes)
+
+            new_components = np.fft.fft(new_components)[:self.precision]
+
+        return Muscle(
+            period=self.period,
+            type=new_type,
+            sampling_interval=self.sampling_interval,
+            precision=self.precision,
+            components=new_components
+        )
+
 
     def __str__(self):
         current_print_options = np.get_printoptions()
