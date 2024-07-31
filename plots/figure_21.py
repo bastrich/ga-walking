@@ -8,5 +8,7 @@ x = [i for i in range(muscle.period)]
 y = [muscle.get_activation(i) for i in range(muscle.period)]
 
 plt.plot(x, y, label="muscle activation")
+plt.xlabel("Time step")
+plt.ylabel("Activation")
 plt.legend()
 plt.show()

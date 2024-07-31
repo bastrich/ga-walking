@@ -97,38 +97,6 @@ class Sim:
         l_x = current_state['body_pos']['calcn_l'][0]
         return min(r_x, l_x) <= pelvis_x <= max(r_x, l_x)
 
-    def calculate_original_fitness_from_NIPS_challenge(self, prev_state, current_state):
-        result = 0
-
-        dt = self.env.osim_model.stepsize
-
-        result += 0.1
-
-        result += 10 * (current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]) #not original, added by me
-
-        velocity = np.array([current_state['body_vel']['pelvis'][0], -current_state['body_vel']['pelvis'][2]])
-        target_velocity = np.array([1.4, 0])
-
-        self.fitness_helpers['footstep_delta_v'] += (velocity - target_velocity)*dt
-
-        ACT2 = 0
-        for muscle in current_state['muscles'].keys():
-            ACT2 += np.square(current_state['muscles'][muscle]['activation'])
-        self.fitness_helpers['footstep_effort'] += ACT2*dt
-
-        if self.footstep['new']:
-            reward_footstep_0 = 10 * self.fitness_helpers['footstep_duration']
-            reward_footstep_v = -np.linalg.norm(self.fitness_helpers['footstep_delta_v'])
-            reward_footstep_e = -self.fitness_helpers['footstep_effort']
-
-            self.fitness_helpers['footstep_duration'] = 0
-            self.fitness_helpers['footstep_delta_v'] = 0
-            self.fitness_helpers['footstep_effort'] = 0
-
-            result += reward_footstep_0 + reward_footstep_v + reward_footstep_e
-
-        return result
-
     def calculate_current_fitness(self, prev_state, current_state, period):
         result = 0
         # result += self.fitness_helpers['alive']
