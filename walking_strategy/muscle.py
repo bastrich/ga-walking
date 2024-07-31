@@ -90,21 +90,6 @@ class Muscle:
 
         return activations.repeat(sampling_interval)
 
-    # @staticmethod
-    # def calculate_direct_activations(activations_dna, period):
-    #     current_indexes = np.arange(len(activations_dna))
-    #     new_indexes = np.linspace(0, len(activations_dna) - 1, period)
-    #     interpolator = interp1d(current_indexes, activations_dna, kind='cubic', fill_value='extrapolate')
-    #     return interpolator(new_indexes)
-    #
-    # @staticmethod
-    # def calculate_fourier_activations(activations_dna, period):
-    #     signal = np.real(np.fft.ifft(activations_dna))
-    #     current_indexes = np.arange(len(signal))
-    #     new_indexes = np.linspace(0, len(signal) - 1, period)
-    #     interpolator = interp1d(current_indexes, signal, kind='cubic', fill_value='extrapolate')
-    #     result = interpolator(new_indexes)
-    #     return result
 
     def get_activation(self, time):
         return self.activations[time % self.period]
