@@ -260,42 +260,38 @@ class Muscle:
     def mutate_fourier_components(self, mutation_rate, mutation_amount):
         new_components = copy.deepcopy(self.components)
 
-        for i in range(len(new_fourier_coefficients)):
+        for i in range(len(new_components)):
             if np.random.uniform() < mutation_rate:
                 if np.random.uniform() < 0.8:
-                    # print(f'b - {np.real(new_fourier_coefficients[i]) / np.imag(new_fourier_coefficients[i])}')
-                    mutation = mutation_amount * np.clip(np.random.normal(0, self.period // self.DISCRETIZATION),
-                                                         -self.period // self.DISCRETIZATION * 0.5,
-                                                         self.period // self.DISCRETIZATION * 0.5)
-                    if np.abs(mutation) < self.period // self.DISCRETIZATION * 0.05:
-                        mutation = np.sign(mutation) * self.period // self.DISCRETIZATION * 0.05
+                    mutation = mutation_amount * np.clip(np.random.normal(0, self.period // self.sampling_interval), -self.period // self.sampling_interval * 0.5, self.period // self.sampling_interval * 0.5)
+                    if np.abs(mutation) < self.period // self.sampling_interval * 0.05:
+                        mutation = np.sign(mutation) * self.period // self.sampling_interval * 0.05
 
-                    if new_fourier_coefficients[i] == 0j:
+                    if new_components[i] == 0j:
                         phase = np.random.uniform(-np.pi, np.pi)
                         mutation *= np.cos(phase) + 1j * np.sin(phase)
                     else:
-                        mutation *= new_fourier_coefficients[i] / np.abs(new_fourier_coefficients[i])
+                        mutation *= new_components[i] / np.abs(new_components[i])
 
-                    new_fourier_coefficients[i] += mutation
-                    # print(f'a - {np.real(new_fourier_coefficients[i]) / np.imag(new_fourier_coefficients[i])}')
-                    signal = np.real(np.fft.ifft(np.pad(new_fourier_coefficients, (
-                    0, self.period // self.DISCRETIZATION - len(new_fourier_coefficients)), 'constant')))
+                    new_components[i] += mutation
+                    signal = np.real(np.fft.ifft(np.pad(new_components, (
+                    0, self.period // self.sampling_interval - len(new_components)), 'constant')))
                     min_value = np.min(signal)
                     max_value = np.max(signal)
                     if min_value < 0 and max_value > 1:
                         if np.abs(min_value) > max_value - 1:
-                            new_fourier_coefficients[i] *= 1 / (1 + np.abs(min_value))
+                            new_components[i] *= 1 / (1 + np.abs(min_value))
                         else:
-                            new_fourier_coefficients[i] *= 1 / np.abs(max_value)
+                            new_components[i] *= 1 / np.abs(max_value)
                     elif min_value < 0:
-                        new_fourier_coefficients[i] *= 1 / (1 + np.abs(min_value))
+                        new_components[i] *= 1 / (1 + np.abs(min_value))
                     elif max_value > 1:
-                        new_fourier_coefficients[i] *= 1 / np.abs(max_value)
+                        new_components[i] *= 1 / np.abs(max_value)
                 elif np.random.choice([True, False]):
-                    new_fourier_coefficients[i] = 0j
+                    new_components[i] = 0j
                 else:
                     phase = np.random.uniform(-np.pi, np.pi)
-                    new_fourier_coefficients[i] = 0.5 * self.period // self.DISCRETIZATION * (
+                    new_components[i] = 0.5 * self.period // self.sampling_interval * (
                                 np.cos(phase) + 1j * np.sin(phase))
 
             if i != 0 and np.random.uniform() < mutation_rate:
@@ -303,10 +299,15 @@ class Muscle:
                 if np.abs(mutation) < 2 * np.pi * 0.05:
                     mutation = np.sign(mutation) * 2 * np.pi * 0.05
 
-                new_fourier_coefficients[i] *= np.exp(1j * mutation)
+                new_components[i] *= np.exp(1j * mutation)
 
-    def mutate_direct_components(self, components, mutation_rate, mutation_amount):
+    def mutate_direct_components(self, mutation_rate, mutation_amount):
         new_components = copy.deepcopy(self.components)
+        for i in range(len(new_components)):
+            if np.random.uniform() <= mutation_rate:
+                new_components[i] += mutation_amount * np.random.normal(0, 0.1)
+                new_components[i] = np.clip(new_components[i], 0, 1)
+        return new_components
 
     def __str__(self):
         current_print_options = np.get_printoptions()
