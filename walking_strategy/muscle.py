@@ -109,13 +109,37 @@ class Muscle:
         new_sampling_interval = self.sampling_interval
 
         if self.type == 'fourier':
-            new_components = self.components * (period // self.sampling_interval) / (self.period // self.sampling_interval)
+            new_components = self.components
+
             if period // self.sampling_interval < self.precision:
                 new_sampling_interval = next(reversed(list(filter(lambda si: period // si >= self.precision, self.SAMPLING_INTERVALS))))
+
+                new_components = np.real(np.fft.ifft(np.pad(self.components, (0, self.period // self.sampling_interval - len(self.components)),'constant')))
+
+                current_indexes = np.arange(len(new_components))
+                new_indexes = np.linspace(0, len(new_components) - 1, self.period // new_sampling_interval)
+                interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
+                new_components = interpolator(new_indexes)
+
+                new_components = np.fft.fft(new_components)[:self.precision]
+
+            new_components = new_components * (period // self.sampling_interval) / (self.period // self.sampling_interval)
+
         else:
             new_components = self.components
+
             if period // self.sampling_interval < self.precision:
                 new_sampling_interval = next(reversed(list(filter(lambda si: period // si >= self.precision, self.SAMPLING_INTERVALS))))
+
+                current_indexes = np.arange(len(self.components))
+                new_indexes = np.linspace(0, len(self.components) - 1, self.period // new_sampling_interval)
+                interpolator = interp1d(current_indexes, self.components, kind='quadratic', fill_value='extrapolate')
+                new_components = interpolator(new_indexes)
+
+                current_indexes = np.arange(len(new_components))
+                new_indexes = np.linspace(0, len(new_components) - 1, self.precision)
+                interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
+                new_components = interpolator(new_indexes)
 
         return Muscle(
             period=period,
@@ -153,6 +177,136 @@ class Muscle:
             components=new_components
         )
 
+    def mutate_sampling_interval(self):
+        new_sampling_interval = random.choice(list(filter(lambda si: self.period // si >= min(self.PRECISIONS), self.SAMPLING_INTERVALS)))
+        if new_sampling_interval == self.sampling_interval:
+            return self
+
+        if self.type == 'fourier':
+            new_components = np.real(np.fft.ifft(np.pad(self.components, (0, self.period // self.sampling_interval - len(self.components)), 'constant')))
+
+            current_indexes = np.arange(len(new_components))
+            new_indexes = np.linspace(0, len(new_components) - 1, self.period // new_sampling_interval)
+            interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
+            new_components = interpolator(new_indexes)
+
+            new_components = np.fft.fft(new_components)[:self.precision]
+        else:
+            current_indexes = np.arange(len(self.components))
+            new_indexes = np.linspace(0, len(self.components) - 1, self.period // new_sampling_interval)
+            interpolator = interp1d(current_indexes, self.components, kind='quadratic', fill_value='extrapolate')
+            new_components = interpolator(new_indexes)
+
+            current_indexes = np.arange(len(new_components))
+            new_indexes = np.linspace(0, len(new_components) - 1, self.precision)
+            interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
+            new_components = interpolator(new_indexes)
+
+        return Muscle(
+            period=self.period,
+            type=self.type,
+            sampling_interval=new_sampling_interval,
+            precision=self.precision,
+            components=new_components
+        )
+
+    def mutate_precision(self):
+        new_precision = random.choice(list(filter(lambda p: self.period // self.sampling_interval >= p, self.PRECISIONS)))
+        if new_precision == self.precision:
+            return self
+
+        if self.type == 'fourier':
+            new_components = np.real(np.fft.ifft(np.pad(self.components, (0, self.period // self.sampling_interval - len(self.components)), 'constant')))
+
+            current_indexes = np.arange(len(new_components))
+            new_indexes = np.linspace(0, len(new_components) - 1, self.period // self.sampling_interval)
+            interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
+            new_components = interpolator(new_indexes)
+
+            new_components = np.fft.fft(new_components)[:new_precision]
+        else:
+            current_indexes = np.arange(len(self.components))
+            new_indexes = np.linspace(0, len(self.components) - 1, self.period // self.sampling_interval)
+            interpolator = interp1d(current_indexes, self.components, kind='quadratic', fill_value='extrapolate')
+            new_components = interpolator(new_indexes)
+
+            current_indexes = np.arange(len(new_components))
+            new_indexes = np.linspace(0, len(new_components) - 1, new_precision)
+            interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
+            new_components = interpolator(new_indexes)
+
+        return Muscle(
+            period=self.period,
+            type=self.type,
+            sampling_interval=self.sampling_interval,
+            precision=new_precision,
+            components=new_components
+        )
+
+    def mutate_components(self, mutation_rate, mutation_amount):
+        if self.type == 'fourier':
+            new_components = self.mutate_fourier_components(mutation_rate, mutation_amount)
+        else:
+            new_components = self.mutate_direct_components(mutation_rate, mutation_amount)
+
+        return Muscle(
+            period=self.period,
+            type=self.type,
+            sampling_interval=self.sampling_interval,
+            precision=self.precision,
+            components=new_components
+        )
+
+    def mutate_fourier_components(self, mutation_rate, mutation_amount):
+        new_components = copy.deepcopy(self.components)
+
+        for i in range(len(new_fourier_coefficients)):
+            if np.random.uniform() < mutation_rate:
+                if np.random.uniform() < 0.8:
+                    # print(f'b - {np.real(new_fourier_coefficients[i]) / np.imag(new_fourier_coefficients[i])}')
+                    mutation = mutation_amount * np.clip(np.random.normal(0, self.period // self.DISCRETIZATION),
+                                                         -self.period // self.DISCRETIZATION * 0.5,
+                                                         self.period // self.DISCRETIZATION * 0.5)
+                    if np.abs(mutation) < self.period // self.DISCRETIZATION * 0.05:
+                        mutation = np.sign(mutation) * self.period // self.DISCRETIZATION * 0.05
+
+                    if new_fourier_coefficients[i] == 0j:
+                        phase = np.random.uniform(-np.pi, np.pi)
+                        mutation *= np.cos(phase) + 1j * np.sin(phase)
+                    else:
+                        mutation *= new_fourier_coefficients[i] / np.abs(new_fourier_coefficients[i])
+
+                    new_fourier_coefficients[i] += mutation
+                    # print(f'a - {np.real(new_fourier_coefficients[i]) / np.imag(new_fourier_coefficients[i])}')
+                    signal = np.real(np.fft.ifft(np.pad(new_fourier_coefficients, (
+                    0, self.period // self.DISCRETIZATION - len(new_fourier_coefficients)), 'constant')))
+                    min_value = np.min(signal)
+                    max_value = np.max(signal)
+                    if min_value < 0 and max_value > 1:
+                        if np.abs(min_value) > max_value - 1:
+                            new_fourier_coefficients[i] *= 1 / (1 + np.abs(min_value))
+                        else:
+                            new_fourier_coefficients[i] *= 1 / np.abs(max_value)
+                    elif min_value < 0:
+                        new_fourier_coefficients[i] *= 1 / (1 + np.abs(min_value))
+                    elif max_value > 1:
+                        new_fourier_coefficients[i] *= 1 / np.abs(max_value)
+                elif np.random.choice([True, False]):
+                    new_fourier_coefficients[i] = 0j
+                else:
+                    phase = np.random.uniform(-np.pi, np.pi)
+                    new_fourier_coefficients[i] = 0.5 * self.period // self.DISCRETIZATION * (
+                                np.cos(phase) + 1j * np.sin(phase))
+
+            if i != 0 and np.random.uniform() < mutation_rate:
+                mutation = mutation_amount * np.clip(np.random.normal(0, np.pi), -np.pi / 2, np.pi / 2)
+                if np.abs(mutation) < 2 * np.pi * 0.05:
+                    mutation = np.sign(mutation) * 2 * np.pi * 0.05
+
+                new_fourier_coefficients[i] *= np.exp(1j * mutation)
+
+    def mutate_direct_components(self, components, mutation_rate, mutation_amount):
+        new_components = copy.deepcopy(self.components)
 
     def __str__(self):
         current_print_options = np.get_printoptions()
@@ -169,46 +323,3 @@ Muscle:
 
         np.set_printoptions(**current_print_options)
         return text
-
-    def mutate(self, mutation_rate, mutation_amount):
-        new_discretization_frequency = self.discretization_frequency
-        new_activations_format = self.activations_format
-        new_activations_dna = copy.deepcopy(self.activations_dna)
-
-        if np.random.uniform() < mutation_rate:
-            new_discretization_frequency = np.random.choice(self.DISCRETIZATION_FREQUENCIES)
-
-        if np.random.uniform() < mutation_rate:
-            new_activations_format = np.random.choice(self.ACTIVATIONS_FORMATS)
-
-        for i in range(len(new_activations_dna)):
-            if np.random.uniform() < mutation_rate:
-                if isinstance(new_activations_dna[i], complex):
-                    real_mutation = np.random.normal(0, max(0.1, mutation_amount * np.abs(np.real(new_activations_dna[i]))))
-                    imag_mutation = np.random.normal(0, max(0.1, mutation_amount * np.abs(np.imag(new_activations_dna[i]))))
-                    new_activations_dna[i] += real_mutation + 1j * imag_mutation
-                else:
-                    new_activations_dna[i] += np.random.normal(0, max(0.1, mutation_amount * np.abs(new_activations_dna[i])))
-
-        #????
-        if np.random.uniform() < 0.1 * mutation_rate:
-            new_activations_dna = np.roll(new_activations_dna, int(np.random.normal(0, 0.2 * self.period)))
-
-        activations = new_activations_dna if self.activations_format == 'direct' else np.real(np.fft.ifft(new_activations_dna))
-        activations = np.clip(activations, 0, 1)
-
-        if self.discretization_frequency != new_discretization_frequency:
-            current_indexes = np.arange(len(activations))
-            new_indexes = np.linspace(0, len(activations) - 1, self.period // new_discretization_frequency)
-            interpolator = interp1d(current_indexes, activations, kind='cubic', fill_value='extrapolate')
-            activations = interpolator(new_indexes)
-
-        return Muscle(
-            period=self.period,
-            discretization_frequency=new_discretization_frequency,
-            activations_format=new_activations_format,
-            activations_dna=activations if new_activations_format == 'direct' else np.fft.fft(activations)
-        )
-
-
-
