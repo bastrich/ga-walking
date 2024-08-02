@@ -1,37 +1,27 @@
-from sim.sim import Sim
+from sim.parallel_sim import ParallelSim
 import numpy as np
 import pickle
 from walking_strategy.walking_strategy_population import WalkingStrategyPopulation
-
 from concurrent.futures import ProcessPoolExecutor
-
 import heapq
-
 import time
 
-# period = 150
+# configuration options
+POPULATION_SIZE = 150
+POPULATION_FILE_PATH = None  # 'results/population'
+MODE = '2D'  # 3D
+PARALLELIZATION = 30
+NUMBER_OF_GENERATIONS = 100
+SIM_STEPS_PER_GENERATION = 1000
 
 
-iterations = 10000
-sim_steps_per_iteration = 1000
 
-# population = WalkingStrategyPopulation(size=150)
-with open('results/population', 'rb') as file:
-    population = pickle.load(file)
 
-# population.walking_strategies = [walking_strategy.with_precision(10).with_period(200) for walking_strategy in population.walking_strategies]
-
-# for walking_strategy in population.walking_strategies:
-#     walking_strategy.change_precision(10)
-
-sims = [Sim('3D', False) for _ in range(len(population.walking_strategies))]
-
-def evaluate(i, walking_strategy):
-    global sims
-    fitness, steps = sims[i].run(walking_strategy, sim_steps_per_iteration)
-    walking_strategy.evaluated_fitness = np.round(fitness, 2)
-    return walking_strategy
-    # if doesn't bacame worse, allow save new mutation'
+if POPULATION_FILE_PATH is None:
+    population = WalkingStrategyPopulation(size=POPULATION_SIZE)
+else:
+    with open(POPULATION_FILE_PATH, 'rb') as file:
+        population = pickle.load(file)
 
 
 def give_birth_to_new_walking_strategy(walking_strategies, fit_map, mutation_rate, mutation_amount):
@@ -40,15 +30,22 @@ def give_birth_to_new_walking_strategy(walking_strategies, fit_map, mutation_rat
     new_walking_strategy = new_walking_strategy.mutate(mutation_rate, mutation_amount)
     return new_walking_strategy
 
+# required for multiprocessing
 if __name__ == "__main__":
 
-    simulations_executor = ProcessPoolExecutor(max_workers=30)
+    parallel_sim = ParallelSim(mode=MODE, parallelization=PARALLELIZATION)
+
+    mutation_rate = 0.8
+    period_mutation_rate = 0.2
+    type_mutation_rate = 0.3
+    sampling_interval_mutation_rate = 0.3
+    precision_mutation_rate = 0.3
+    components_mutation_rate = 0.3
+    components_mutation_amount = 0.3
+
+
     populations_executor = ProcessPoolExecutor(max_workers=30)
 
-    # shrink_growth_rate = 0.01
-    mutation_rate = 0.3
-    mutation_amount = 0.3
-    # mutation_coefficient = 0.01
 
     total_best_fitness_value = -1000
     current_best_fitness_value = -1000
@@ -56,9 +53,8 @@ if __name__ == "__main__":
     iterations_with_fitness_improvement = 0
     iterations_without_fitness_improvement = 0
 
-    start_time = time.time()
 
-    for iteration in range(iterations):
+    for generation in range(NUMBER_OF_GENERATIONS):
         print(f'Last fitness: {current_best_fitness_value}, Best fitness: {total_best_fitness_value}')
         print(f'Iteration: {iteration + 1}/{iterations}')
 
@@ -66,13 +62,7 @@ if __name__ == "__main__":
 
         print('Running simulations...')
 
-        futures = [simulations_executor.submit(evaluate, i, walking_strategy) for i, walking_strategy in enumerate(population.walking_strategies)]
-        walking_strategies = [future.result() for future in futures]
-        fitness_values = np.array([walking_strategy.evaluated_fitness for walking_strategy in walking_strategies])
-
-        # save current population
-        with open(f'results/population', 'wb') as file:
-            pickle.dump(population, file)
+        simulation_results = parallel_sim.run(population.walking_strategies, SIM_STEPS_PER_GENERATION)
 
         current_best_fitness_value = fitness_values.max()
         if current_best_fitness_value > total_best_fitness_value + 0.01:
@@ -133,12 +123,15 @@ if __name__ == "__main__":
 
         population = WalkingStrategyPopulation(walking_strategies=new_walking_strategies)
 
+        # save current population
+        with open(f'results/population', 'wb') as file:
+            pickle.dump(population, file)
+
 
 
     end_time = time.time()
 
     print(f'Execution time: {(end_time - start_time) / 60} minutes')
 
-    simulations_executor.shutdown()
     populations_executor.shutdown()
 

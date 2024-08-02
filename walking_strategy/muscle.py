@@ -274,8 +274,7 @@ class Muscle:
                         mutation *= new_components[i] / np.abs(new_components[i])
 
                     new_components[i] += mutation
-                    signal = np.real(np.fft.ifft(np.pad(new_components, (
-                    0, self.period // self.sampling_interval - len(new_components)), 'constant')))
+                    signal = np.real(np.fft.ifft(np.pad(new_components, (0, self.period // self.sampling_interval - len(new_components)), 'constant')))
                     min_value = np.min(signal)
                     max_value = np.max(signal)
                     if min_value < 0 and max_value > 1:
@@ -300,6 +299,8 @@ class Muscle:
                     mutation = np.sign(mutation) * 2 * np.pi * 0.05
 
                 new_components[i] *= np.exp(1j * mutation)
+
+        return new_components
 
     def mutate_direct_components(self, mutation_rate, mutation_amount):
         new_components = copy.deepcopy(self.components)
