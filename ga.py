@@ -19,29 +19,32 @@ NUMBER_OF_GENERATIONS = 100
 SIM_STEPS_PER_GENERATION = 1000
 MUTABILITY_DECREASE_THRESHOLD = 5
 MUTABILITY_INCREASE_THRESHOLD = 10
+ELITES_RATIO = 0.15
 
 def update_mutation_parameters(generations_with_improvement, generations_without_improvement, current_mutation_parameters):
     new_mutation_parameters = copy.deepcopy(current_mutation_parameters)
 
-    if generations_with_improvement > MUTABILITY_DECREASE_THRESHOLD:
+    if generations_with_improvement >= 1 and generations_with_improvement % MUTABILITY_DECREASE_THRESHOLD == 0:
         print(f'{MUTABILITY_DECREASE_THRESHOLD} generations with improvement, decreasing mutability')
-        # shrink_growth_rate += 0.01
-        mutation_rate += 0.05
-        mutation_amount += 0.05
-        # mutation_coefficient += 0.01
-        iterations_without_fitness_improvement = 0
-    elif generations_without_improvement > MUTABILITY_INCREASE_THRESHOLD:
+
+        mutation_parameter_key = np.random.choice(filter(lambda key: key != 'mutation_rate', list(current_mutation_parameters.keys())))
+        if mutation_parameter_key == 'period_mutation_rate':
+            new_mutation_parameters[mutation_parameter_key] += 0.01
+        else:
+            new_mutation_parameters[mutation_parameter_key] += 0.02
+    elif generations_without_improvement >= 1 and generations_without_improvement % MUTABILITY_INCREASE_THRESHOLD == 0:
         print(f'{MUTABILITY_INCREASE_THRESHOLD} generation without improvement, increasing mutability')
-        # shrink_growth_rate -= 0.01
-        mutation_rate -= 0.05
-        mutation_amount -= 0.05
-        # mutation_coefficient -= 0.01
+
+        mutation_parameter_key = np.random.choice(filter(lambda key: key != 'mutation_rate', list(current_mutation_parameters.keys())))
+        if mutation_parameter_key == 'period_mutation_rate':
+            new_mutation_parameters[mutation_parameter_key] -= 0.01
+        else:
+            new_mutation_parameters[mutation_parameter_key] -= 0.02
 
     for key in new_mutation_parameters:
         new_mutation_parameters[key] = np.clip(new_mutation_parameters[key], 0, 1)
 
     return new_mutation_parameters
-
 
 
 if POPULATION_FILE_PATH is None:
@@ -54,7 +57,7 @@ else:
 if __name__ == "__main__":
 
     parallel_sim = ParallelSim(mode=MODE, parallelization=PARALLELIZATION)
-    population_evaluator = PopulationEvaluator(mode=MODE, parallelization=PARALLELIZATION)
+    population_evaluator = PopulationEvaluator(parallelization=PARALLELIZATION)
 
     mutation_parameters = {
         'mutation_rate': 0.8,
@@ -98,6 +101,6 @@ if __name__ == "__main__":
         mutation_parameters = update_mutation_parameters(generations_with_improvement, generations_without_improvement, mutation_parameters)
 
         print('Calculating new population...')
-        population = population_evaluator.breed_new_population(simulation_results, mutation_parameters)
+        population = population_evaluator.breed_new_population(simulation_results, mutation_parameters, ELITES_RATIO)
 
     print('Finished execution of genetic algorithm')

@@ -1,4 +1,4 @@
-from walking_strategy import WalkingStrategy
+from walking_strategy.walking_strategy import WalkingStrategy
 
 
 class WalkingStrategyPopulation:

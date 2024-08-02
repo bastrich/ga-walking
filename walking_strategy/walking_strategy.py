@@ -1,5 +1,5 @@
 import numpy as np
-from muscle import Muscle
+from walking_strategy.muscle import Muscle
 
 
 class WalkingStrategy:
@@ -45,7 +45,6 @@ class WalkingStrategy:
         if np.random.uniform() > mutation_rate:
             return self
 
-        new_period = self.period
         new_muscles = self.muscles
         if self.fixed_period is None and np.random.uniform() <= period_mutation_rate:
             new_period = np.random.choice(Muscle.PERIODS)

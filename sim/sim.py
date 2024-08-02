@@ -1,4 +1,4 @@
-from sim_env import SimEnv
+from sim.sim_env import SimEnv
 import numpy as np
 import time
 

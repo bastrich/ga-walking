@@ -221,9 +221,9 @@ class SimEnv():
 
     def __init__(self, mode, visualize):
         if mode == '3D':
-            model_path = os.path.join(os.path.dirname(__file__), 'models/3d.osim')
+            model_path = os.path.join(os.path.dirname(__file__), '../models/3d.osim')
         elif mode == '2D':
-            model_path = os.path.join(os.path.dirname(__file__), 'models/2d.osim')
+            model_path = os.path.join(os.path.dirname(__file__), '../models/2d.osim')
         else:
             raise ValueError('Invalid mode')
 
