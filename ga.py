@@ -10,6 +10,8 @@ from concurrent.futures import ProcessPoolExecutor
 import heapq
 import time
 
+import atexit
+
 # configuration options
 POPULATION_SIZE = 150
 POPULATION_FILE_PATH = None  # 'results/population'
@@ -58,6 +60,11 @@ if __name__ == "__main__":
 
     parallel_sim = ParallelSim(mode=MODE, parallelization=PARALLELIZATION)
     population_evaluator = PopulationEvaluator(parallelization=PARALLELIZATION)
+
+    def shutdown_hook():
+        parallel_sim.shutdown()
+        population_evaluator.shutdown()
+    atexit.register(shutdown_hook)
 
     mutation_parameters = {
         'mutation_rate': 0.8,

@@ -42,11 +42,13 @@ class PopulationEvaluator:
 
         return WalkingStrategyPopulation(walking_strategies=new_walking_strategies)
 
-    def breed_new_walking_strategy(self, walking_strategies, fit_map, mutation_rate, period_mutation_rate, type_mutation_rate, sampling_interval_mutation_rate, precision_mutation_rate, components_mutation_rate, components_mutation_amount):
+    @staticmethod
+    def breed_new_walking_strategy(walking_strategies, fit_map, mutation_rate, period_mutation_rate, type_mutation_rate, sampling_interval_mutation_rate, precision_mutation_rate, components_mutation_rate, components_mutation_amount):
         parent1, parent2 = np.random.choice(walking_strategies, size=2, p=fit_map)
         new_walking_strategy = parent1.crossover(parent2)
         new_walking_strategy = new_walking_strategy.mutate(mutation_rate, period_mutation_rate, type_mutation_rate, sampling_interval_mutation_rate, precision_mutation_rate, components_mutation_rate, components_mutation_amount)
         return new_walking_strategy
 
-    def __del__(self):
-        self.populations_executor.shutdown()
+    def shutdown(self):
+        if self.populations_executor:
+            self.populations_executor.shutdown()

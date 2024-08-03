@@ -1,14 +1,14 @@
 from walking_strategy.muscle import Muscle
 import matplotlib.pyplot as plt
 
-muscle = Muscle(period=200)
+muscle = Muscle(period=200, type='fourier', precision=40, sampling_interval=5)
 print(muscle)
 
 x1 = [i for i in range(muscle.period)]
 y1 = [muscle.get_activation(i) for i in range(muscle.period)]
 
 # new_muscle = muscle.with_period(120)
-new_muscle = muscle.with_period(320)
+new_muscle = muscle.with_period(120)
 
 x2 = [i for i in range(new_muscle.period)]
 y2 = [new_muscle.get_activation(i) for i in range(new_muscle.period)]

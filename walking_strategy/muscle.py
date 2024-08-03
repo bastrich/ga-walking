@@ -107,29 +107,38 @@ class Muscle:
             raise ValueError(f'period must be one of {self.PERIODS}')
 
         new_sampling_interval = self.sampling_interval
+        new_precision = self.precision
 
         if self.type == 'fourier':
             new_components = self.components
 
             if period // self.sampling_interval < self.precision:
-                new_sampling_interval = next(reversed(list(filter(lambda si: period // si >= self.precision, self.SAMPLING_INTERVALS))))
+                available_sampling_intervals = list(filter(lambda si: period // si >= self.precision, self.SAMPLING_INTERVALS))
+                if len(available_sampling_intervals) != 0:
+                    new_sampling_interval = next(reversed(available_sampling_intervals))
+                else:
+                    new_precision = next(reversed(list(filter(lambda p: period // self.sampling_interval >= p, self.PRECISIONS))))
 
                 new_components = np.real(np.fft.ifft(np.pad(self.components, (0, self.period // self.sampling_interval - len(self.components)),'constant')))
 
                 current_indexes = np.arange(len(new_components))
-                new_indexes = np.linspace(0, len(new_components) - 1, self.period // new_sampling_interval)
+                new_indexes = np.linspace(0, len(new_components) - 1, self.period // self.sampling_interval)
                 interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
                 new_components = interpolator(new_indexes)
 
-                new_components = np.fft.fft(new_components)[:self.precision]
-
-            new_components = new_components * (period // self.sampling_interval) / (self.period // self.sampling_interval)
+                new_components = np.fft.fft(new_components)[:new_precision]
+            else:
+                new_components = new_components * (period // new_sampling_interval) / (self.period // self.sampling_interval)
 
         else:
             new_components = self.components
 
             if period // self.sampling_interval < self.precision:
-                new_sampling_interval = next(reversed(list(filter(lambda si: period // si >= self.precision, self.SAMPLING_INTERVALS))))
+                available_sampling_intervals = list(filter(lambda si: period // si >= self.precision, self.SAMPLING_INTERVALS))
+                if len(available_sampling_intervals) != 0:
+                    new_sampling_interval = next(reversed(available_sampling_intervals))
+                else:
+                    new_precision = next(reversed(list(filter(lambda p: period // new_sampling_interval >= p, self.PRECISIONS))))
 
                 current_indexes = np.arange(len(self.components))
                 new_indexes = np.linspace(0, len(self.components) - 1, self.period // new_sampling_interval)
@@ -137,7 +146,7 @@ class Muscle:
                 new_components = interpolator(new_indexes)
 
                 current_indexes = np.arange(len(new_components))
-                new_indexes = np.linspace(0, len(new_components) - 1, self.precision)
+                new_indexes = np.linspace(0, len(new_components) - 1, new_precision)
                 interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
                 new_components = interpolator(new_indexes)
 
@@ -145,7 +154,7 @@ class Muscle:
             period=period,
             type=self.type,
             sampling_interval=new_sampling_interval,
-            precision=self.precision,
+            precision=new_precision,
             components=new_components
         )
 
@@ -178,7 +187,7 @@ class Muscle:
         )
 
     def mutate_sampling_interval(self):
-        new_sampling_interval = random.choice(list(filter(lambda si: self.period // si >= min(self.PRECISIONS), self.SAMPLING_INTERVALS)))
+        new_sampling_interval = random.choice(list(filter(lambda si: self.period // si >= self.precision, self.SAMPLING_INTERVALS)))
         if new_sampling_interval == self.sampling_interval:
             return self
 

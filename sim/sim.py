@@ -23,7 +23,7 @@ class Sim:
 
         for sim_step in range(number_of_steps):
 
-            current_state = self.env.step(walking_strategy.get_muscle_activations(sim_step))
+            current_state = self.env.step(walking_strategy.get_muscles_activations(sim_step))
 
             if self.is_failed(current_state) or (time.time() - start_time > 10 and not self.visualize):
             # if self.is_failed(current_state) or time.time() - start_time > 10:
