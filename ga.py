@@ -6,9 +6,6 @@ import pickle
 
 from walking_strategy.population_evaluator import PopulationEvaluator
 from walking_strategy.walking_strategy_population import WalkingStrategyPopulation
-from concurrent.futures import ProcessPoolExecutor
-import heapq
-import time
 
 import atexit
 
@@ -17,7 +14,7 @@ POPULATION_SIZE = 150
 POPULATION_FILE_PATH = None  # 'results/population'
 MODE = '2D'  # 3D
 PARALLELIZATION = 30
-NUMBER_OF_GENERATIONS = 100
+NUMBER_OF_GENERATIONS = 10
 SIM_STEPS_PER_GENERATION = 1000
 MUTABILITY_DECREASE_THRESHOLD = 5
 MUTABILITY_INCREASE_THRESHOLD = 10
@@ -50,10 +47,12 @@ def update_mutation_parameters(generations_with_improvement, generations_without
 
 
 if POPULATION_FILE_PATH is None:
-    population = WalkingStrategyPopulation(size=POPULATION_SIZE)
+    population = WalkingStrategyPopulation(size=POPULATION_SIZE, initial_generation='perlin')
 else:
     with open(POPULATION_FILE_PATH, 'rb') as file:
         population = pickle.load(file)
+
+analytics = []
 
 # required for multiprocessing
 if __name__ == "__main__":
@@ -98,9 +97,15 @@ if __name__ == "__main__":
             generations_with_improvement = 0
             generations_without_improvement += 1
 
-        print('Saving current population to disk...')
+        print('Saving current population and analytics to disk...')
         with open(f'results/population', 'wb') as file:
             pickle.dump(population, file)
+
+        analytics.append({
+            'fitness': current_fitness,
+        })
+        with open(f'results/analytics', 'wb') as file:
+            pickle.dump(analytics, file)
 
         print(f'Current fitness: {current_fitness}, Best fitness: {best_fitness}')
 

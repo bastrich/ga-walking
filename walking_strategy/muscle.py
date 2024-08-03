@@ -12,7 +12,7 @@ class Muscle:
     SAMPLING_INTERVALS = [5, 10, 20, 40]
     PRECISIONS = [5, 10, 20, 40]
 
-    def __init__(self, period, type=None, sampling_interval=None, precision=None, components=None, generation='perlin'):
+    def __init__(self, period, type=None, sampling_interval=None, precision=None, components=None, initial_generation='perlin'):
         if period in self.PERIODS:
             self.period = period
         else:
@@ -44,7 +44,7 @@ class Muscle:
             raise ValueError(f'precision must be one of {self.PRECISIONS}')
 
         if components is None:
-            self.components = self.generate_random_components(self.period, self.type, self.sampling_interval, self.precision, generation)
+            self.components = self.generate_random_components(self.period, self.type, self.sampling_interval, self.precision, initial_generation)
         elif self.precision != len(components):
             raise ValueError('length of components must be equal to precision')
         elif self.type == 'direct' and isinstance(components[0], complex) or self.type == 'fourier' and isinstance(components[0], float):

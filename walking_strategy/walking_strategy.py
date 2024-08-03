@@ -4,7 +4,7 @@ from walking_strategy.muscle import Muscle
 
 class WalkingStrategy:
 
-    def __init__(self, fixed_period=None, fixed_type=None, fixed_sampling_interval=None, fixed_precision=None, muscles=None):
+    def __init__(self, fixed_period=None, fixed_type=None, fixed_sampling_interval=None, fixed_precision=None, initial_generation='perlin', muscles=None):
         if muscles is not None:
             if len(muscles) != 11:
                 raise ValueError("muscles must have size 11")
@@ -28,10 +28,10 @@ class WalkingStrategy:
             self.muscles = muscles
         elif fixed_period is not None:
             self.period = fixed_period
-            self.muscles = [Muscle(period=self.period, type=fixed_type, sampling_interval=fixed_sampling_interval, precision=fixed_precision) for _ in range(11)]
+            self.muscles = [Muscle(period=self.period, type=fixed_type, sampling_interval=fixed_sampling_interval, precision=fixed_precision, initial_generation=initial_generation) for _ in range(11)]
         else:
             self.period = np.random.choice(Muscle.PERIODS)
-            self.muscles = [Muscle(period=self.period, type=fixed_type, sampling_interval=fixed_sampling_interval, precision=fixed_precision) for _ in range(11)]
+            self.muscles = [Muscle(period=self.period, type=fixed_type, sampling_interval=fixed_sampling_interval, precision=fixed_precision, initial_generation=initial_generation) for _ in range(11)]
 
         self.fixed_period = fixed_period
         self.fixed_type = fixed_type

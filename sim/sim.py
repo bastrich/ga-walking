@@ -115,45 +115,18 @@ class Sim:
         distance_traveled = current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]
         self.fitness_helpers['footstep_delta_x'] += distance_traveled
 
-        # self.fitness_helpers['footstep_side_error'] += np.abs(current_state['body_vel']['pelvis'][2])
-        # self.fitness_helpers['footstep_x_error'] += np.abs(distance_traveled) if distance_traveled < 0 else 0
-
-        # result -= 10 * np.abs(distance_traveled) if distance_traveled < 0 else 0
-        # result -= 10 * np.abs(current_state['body_vel']['pelvis'][2])
-
-        # result += 10 * distance_traveled #!!!!!!!
         result += 10 * distance_traveled * np.abs(distance_traveled) / np.linalg.norm(np.array([current_state['body_pos']['pelvis'][0], current_state['body_pos']['pelvis'][2]]) - np.array([prev_state['body_pos']['pelvis'][0], prev_state['body_pos']['pelvis'][2]])) #!!!!!!!
 
         # reward from velocity (penalize from deviating from v_tgt)
 
         # p_body = [state_desc['body_pos']['pelvis'][0], -state_desc['body_pos']['pelvis'][2]]
         velocity = np.array([current_state['body_vel']['pelvis'][0], -current_state['body_vel']['pelvis'][2]])
-        # velocity_magnitude = np.linalg.norm(velocity)
-        # if velocity_magnitude != 0:
-        #     unit_velocity = velocity / velocity_magnitude
-        # else:
-        #     unit_velocity = 0
+
 
         target_velocity = np.array([1.4, 0])
 
         self.fitness_helpers['footstep_delta_v'] += (velocity - target_velocity)*dt
 
-
-        # print(unit_velocity)
-        # print(np.linalg.norm(unit_velocity))
-        # v_tgt = self.vtgt.get_vtgt(p_body).T
-
-        # self.d_reward['footstep']['del_v'] += (v_body - v_tgt)*dt
-
-        # prev_pelvis_head = np.array(prev_state['body_pos']['head']) - np.array(prev_state['body_pos']['pelvis'])
-        # prev_projection_pelvis_head = np.linalg.norm([prev_pelvis_head[0], prev_pelvis_head[2]])
-        # prev_pelvis_head_angle = np.arctan2(prev_projection_pelvis_head, prev_pelvis_head[1])
-        #
-        # pelvis_head = np.array(current_state['body_pos']['head']) - np.array(current_state['body_pos']['pelvis'])
-        # projection_pelvis_head = np.linalg.norm([pelvis_head[0], pelvis_head[2]])
-        # current_pelvis_head_angle = np.arctan2(projection_pelvis_head, pelvis_head[1])
-
-        # result += -10 * (current_pelvis_head_angle - prev_pelvis_head_angle) #!!!!!!!!!!
 
         if self.mode == '3D':
             right_hip = np.array([current_state['body_pos']['femur_r'][0], current_state['body_pos']['femur_r'][2]])
@@ -177,53 +150,6 @@ class Sim:
             elif projection_right_heel > projection_left_heel:
                 # print('crossing')
                 result -= 1
-
-        # result += 10 * distance_traveled
-
-
-        #
-        # if self.visualize:
-        #     # def add_custom_decorations(system, state):
-        #     #     # Создаем декорацию линии
-        #     #     line = opensim.simbody.DecorativeLine(state_desc['joint_pos']['hip_l'], state_desc['body_pos']['calcn_l'])
-        #     #     line.setColor(opensim.Vec3(0, 1, 0))  # Устанавливаем цвет линии (красный)
-        #     #     line.setLineThickness(0.1)
-        #     #
-        #     #     # Добавляем декорацию к системе
-        #     #     system.addDecoration(state, line)
-        #
-        #     self.visualize
-        #
-        #     line = opensim.simbody.DecorativeLine(
-        #         # opensim.Vec3(-state_desc['joint_pos']['hip_l'][0], state_desc['joint_pos']['hip_l'][1], -state_desc['joint_pos']['hip_l'][2]),
-        #         # opensim.Vec3(-state_desc['body_pos']['calcn_l'][0], state_desc['body_pos']['calcn_l'][1], -state_desc['body_pos']['calcn_l'][2])
-        #         opensim.Vec3(0, 0, 0),
-        #         opensim.Vec3(state_desc['body_pos']['femur_l'])
-        #     )
-        #     line.setColor(opensim.Green)  # Устанавливаем цвет линии (красный)
-        #     line.setLineThickness(5)
-        #
-        #     # if self.last_line_idx is not None:
-        #     #     self.visualizer.updDecoration(self.last_line_idx).setOpacity(255)
-        #     self.last_line_idx = self.visualizer.addDecoration(0, opensim.Transform(), line)
-
-        # b = (right_heel[0] - right_hip[0])*(left_heel[1] - left_hip[1]) - (right_heel[1] - right_hip[1])*(left_heel[0] - left_hip[0])
-        # a = (right_heel[0] - right_hip[0])*(right_hip[1] - left_hip[1]) - (right_heel[1] - right_hip[1])*(right_hip[0] - left_hip[0])
-        # c = (left_heel[0] - left_hip[0])*(right_hip[1] - left_hip[1]) - (left_heel[1] - left_hip[1])*(right_hip[0] - left_hip[0])
-        #
-        # legs_crossing = False
-        # if b == 0:
-        #     legs_crossing = False
-        # elif 0 <= a/b <= 1 or 0 <= c/b <= 1:
-        #     legs_crossing = True
-
-        # limit reward for big steps
-        # add np.roll mutation
-        ## add direction to fitness value
-
-        # footstep reward (when made a new step)
-
-
 
         if self.footstep['new']:
             result += 20

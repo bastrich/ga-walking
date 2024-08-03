@@ -2,15 +2,13 @@ from walking_strategy.walking_strategy import WalkingStrategy
 
 
 class WalkingStrategyPopulation:
-    def __init__(self, **kwargs):
-        walking_strategies = kwargs.get('walking_strategies')
+    def __init__(self, walking_strategies=None, size=None, initial_generation='perlin'):
         if walking_strategies is not None:
             self.walking_strategies = walking_strategies
             return
 
-        size = kwargs.get('size')
         if size is not None:
-            self.walking_strategies = [WalkingStrategy() for _ in range(size)]
+            self.walking_strategies = [WalkingStrategy(initial_generation=initial_generation) for _ in range(size)]
             return
 
         raise Exception('Wrong arguments')
