@@ -122,13 +122,13 @@ class Muscle:
                 new_components = np.real(np.fft.ifft(np.pad(self.components, (0, self.period // self.sampling_interval - len(self.components)),'constant')))
 
                 current_indexes = np.arange(len(new_components))
-                new_indexes = np.linspace(0, len(new_components) - 1, self.period // self.sampling_interval)
+                new_indexes = np.linspace(0, len(new_components) - 1, period // new_sampling_interval)
                 interpolator = interp1d(current_indexes, new_components, kind='quadratic', fill_value='extrapolate')
                 new_components = interpolator(new_indexes)
 
                 new_components = np.fft.fft(new_components)[:new_precision]
             else:
-                new_components = new_components * (period // new_sampling_interval) / (self.period // self.sampling_interval)
+                new_components = new_components * (period // self.sampling_interval) / (self.period // self.sampling_interval)
 
         else:
             new_components = self.components
