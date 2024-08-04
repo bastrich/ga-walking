@@ -24,12 +24,14 @@ class ParallelSim:
                     break
 
                 walking_strategy, number_of_steps = task
-                fitness, steps = sim.run(walking_strategy, number_of_steps)
+                fitness, steps, distance, energy = sim.run(walking_strategy, number_of_steps)
 
                 output_queue.put({
                     'walking_strategy': walking_strategy,
                     'fitness': fitness,
-                    'steps': steps
+                    'steps': steps,
+                    'distance': distance,
+                    'energy': energy
                 })
         except Exception as e:
             output_queue.put(e)

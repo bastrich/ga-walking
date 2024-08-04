@@ -17,6 +17,8 @@ class Sim:
         self.init_fitness_helpers()
         self.init_footstep_info(prev_state)
         fitness = 0
+        distance = 0
+        energy = 0
 
 
         start_time = time.time()
@@ -31,6 +33,8 @@ class Sim:
 
             self.update_footstep(current_state)
             fitness += self.calculate_current_fitness(prev_state, current_state, walking_strategy.period)
+            distance += self.calculate_current_distance_delta(prev_state, current_state)
+            energy += self.calculate_current_energy(current_state)
 
             prev_state = current_state
 
@@ -39,7 +43,7 @@ class Sim:
         # if not self.is_failed(prev_state) and sim_step >= number_of_steps - 1:
         #     fitness += 50
 
-        return np.round(fitness, 2), sim_step + 1
+        return np.round(fitness, 2), sim_step + 1, distance, energy
 
     def is_failed(selfself, state):
         return state['body_pos']['pelvis'][1] < 0.6
@@ -179,4 +183,14 @@ class Sim:
             self.fitness_helpers['footstep_x_error'] = 0
 
         return result
+
+    def calculate_current_distance_delta(self, prev_state, current_state):
+        return current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]
+
+    def calculate_current_energy(self, current_state):
+        dt = self.env.osim_model.stepsize
+        ACT2 = 0
+        for muscle in current_state['muscles'].keys():
+            ACT2 += np.square(current_state['muscles'][muscle]['activation'])
+        return ACT2 * dt
 

@@ -9,6 +9,10 @@ from walking_strategy.walking_strategy_population import WalkingStrategyPopulati
 
 import atexit
 
+import time
+
+from itertools import groupby
+
 # configuration options
 POPULATION_SIZE = 150
 POPULATION_FILE_PATH = None  # 'results/population'
@@ -85,10 +89,17 @@ if __name__ == "__main__":
         print(f'Starting generation: {generation + 1}/{NUMBER_OF_GENERATIONS}')
 
         print('Running simulations...')
+        simulation_start_time = time.time()
         simulation_results = parallel_sim.run(population.walking_strategies, SIM_STEPS_PER_GENERATION)
+        simulation_duration = time.time() - simulation_start_time
         print('Finished simulations')
 
-        current_fitness = max([simulation_result['fitness'] for simulation_result in simulation_results])
+        print('Saving current population to disk...')
+        with open(f'results/population', 'wb') as file:
+            pickle.dump(population, file)
+
+        best_simulation_result = max(simulation_results, key=lambda simulation_result: simulation_result['fitness'])
+        current_fitness = best_simulation_result['fitness']
         if current_fitness > best_fitness:
             best_fitness = current_fitness
             generations_with_improvement += 1
@@ -97,15 +108,10 @@ if __name__ == "__main__":
             generations_with_improvement = 0
             generations_without_improvement += 1
 
-        print('Saving current population and analytics to disk...')
-        with open(f'results/population', 'wb') as file:
-            pickle.dump(population, file)
-
-        analytics.append({
-            'fitness': current_fitness,
-        })
-        with open(f'results/analytics', 'wb') as file:
-            pickle.dump(analytics, file)
+        periods_distribution = {period: len(list(periods)) for period, periods in groupby(sorted([simulation_result['walking_strategy'].period for simulation_result in simulation_results]))}
+        types_distribution = {type: len(list(types)) for type, types in groupby(sorted(np.concatenate([[muscle.type for muscle in simulation_result['walking_strategy'].muscles] for simulation_result in simulation_results])))}
+        sampling_intervals_distribution = {sampling_interval: len(list(sampling_intervals)) for sampling_interval, sampling_intervals in groupby(sorted(np.concatenate([[muscle.sampling_interval for muscle in simulation_result['walking_strategy'].muscles] for simulation_result in simulation_results])))}
+        precisions_distribution = {precision: len(list(precisions)) for precision, precisions in groupby(sorted(np.concatenate([[muscle.precision for muscle in simulation_result['walking_strategy'].muscles] for simulation_result in simulation_results])))}
 
         print(f'Current fitness: {current_fitness}, Best fitness: {best_fitness}')
 
@@ -113,6 +119,25 @@ if __name__ == "__main__":
         mutation_parameters = update_mutation_parameters(generations_with_improvement, generations_without_improvement, mutation_parameters)
 
         print('Calculating new population...')
+        evaluation_start_time = time.time()
         population = population_evaluator.breed_new_population(simulation_results, mutation_parameters, ELITES_RATIO)
+        evaluation_duration = time.time() - evaluation_start_time
+
+        print('Saving analytics to disk...')
+        analytics.append({
+            'fitness': current_fitness,
+            'simulation_duration': np.round(simulation_duration),
+            'evaluation_duration': np.round(evaluation_duration),
+            'walking_stability': best_simulation_result['steps'],
+            'distance': best_simulation_result['distance'],
+            'energy': best_simulation_result['energy'],
+            'periods_distribution': periods_distribution,
+            'types_distribution': types_distribution,
+            'sampling_intervals_distribution': sampling_intervals_distribution,
+            'precisions_distribution': precisions_distribution
+        })
+        with open(f'results/analytics', 'wb') as file:
+            pickle.dump(analytics, file)
+
 
     print('Finished execution of genetic algorithm')
