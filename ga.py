@@ -51,7 +51,7 @@ def update_mutation_parameters(generations_with_improvement, generations_without
 
 
 if POPULATION_FILE_PATH is None:
-    population = WalkingStrategyPopulation(size=POPULATION_SIZE, initial_generation='perlin')
+    population = WalkingStrategyPopulation(size=POPULATION_SIZE)
 else:
     with open(POPULATION_FILE_PATH, 'rb') as file:
         population = pickle.load(file)
