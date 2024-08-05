@@ -17,9 +17,10 @@ from itertools import groupby
 POPULATION_SIZE = 150
 POPULATION_FILE_PATH = 'results/population'
 READ_POPULATION_FROM_FILE = False
+ANALYTICS_FILE_PATH = 'results/analytics_fitness_function_from_design'
 MODE = '2D'  # 3D
 PARALLELIZATION = 30
-NUMBER_OF_GENERATIONS = 20
+NUMBER_OF_GENERATIONS = 50
 SIM_STEPS_PER_GENERATION = 1000
 MUTABILITY_DECREASE_THRESHOLD = 5
 MUTABILITY_INCREASE_THRESHOLD = 10
@@ -137,7 +138,7 @@ if __name__ == "__main__":
             'sampling_intervals_distribution': sampling_intervals_distribution,
             'precisions_distribution': precisions_distribution
         })
-        with open(f'results/analytics', 'wb') as file:
+        with open(ANALYTICS_FILE_PATH, 'wb') as file:
             pickle.dump(analytics, file)
 
 
