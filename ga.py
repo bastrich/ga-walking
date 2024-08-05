@@ -15,14 +15,15 @@ from itertools import groupby
 
 # configuration options
 POPULATION_SIZE = 150
-POPULATION_FILE_PATH = None  # 'results/population'
+POPULATION_FILE_PATH = 'results/population'
+READ_POPULATION_FROM_FILE = False
 MODE = '2D'  # 3D
 PARALLELIZATION = 30
-NUMBER_OF_GENERATIONS = 10
+NUMBER_OF_GENERATIONS = 20
 SIM_STEPS_PER_GENERATION = 1000
 MUTABILITY_DECREASE_THRESHOLD = 5
 MUTABILITY_INCREASE_THRESHOLD = 10
-ELITES_RATIO = 0.15
+ELITES_RATIO = 0.2
 
 def update_mutation_parameters(generations_with_improvement, generations_without_improvement, current_mutation_parameters):
     new_mutation_parameters = copy.deepcopy(current_mutation_parameters)
@@ -30,7 +31,7 @@ def update_mutation_parameters(generations_with_improvement, generations_without
     if generations_with_improvement >= 1 and generations_with_improvement % MUTABILITY_DECREASE_THRESHOLD == 0:
         print(f'{MUTABILITY_DECREASE_THRESHOLD} generations with improvement, decreasing mutability')
 
-        mutation_parameter_key = np.random.choice(filter(lambda key: key != 'mutation_rate', list(current_mutation_parameters.keys())))
+        mutation_parameter_key = np.random.choice(list(filter(lambda key: key != 'mutation_rate', list(current_mutation_parameters.keys()))))
         if mutation_parameter_key == 'period_mutation_rate':
             new_mutation_parameters[mutation_parameter_key] += 0.01
         else:
@@ -38,7 +39,7 @@ def update_mutation_parameters(generations_with_improvement, generations_without
     elif generations_without_improvement >= 1 and generations_without_improvement % MUTABILITY_INCREASE_THRESHOLD == 0:
         print(f'{MUTABILITY_INCREASE_THRESHOLD} generation without improvement, increasing mutability')
 
-        mutation_parameter_key = np.random.choice(filter(lambda key: key != 'mutation_rate', list(current_mutation_parameters.keys())))
+        mutation_parameter_key = np.random.choice(list(filter(lambda key: key != 'mutation_rate', list(current_mutation_parameters.keys()))))
         if mutation_parameter_key == 'period_mutation_rate':
             new_mutation_parameters[mutation_parameter_key] -= 0.01
         else:
@@ -50,11 +51,11 @@ def update_mutation_parameters(generations_with_improvement, generations_without
     return new_mutation_parameters
 
 
-if POPULATION_FILE_PATH is None:
-    population = WalkingStrategyPopulation(size=POPULATION_SIZE)
-else:
+if READ_POPULATION_FROM_FILE:
     with open(POPULATION_FILE_PATH, 'rb') as file:
         population = pickle.load(file)
+else:
+    population = WalkingStrategyPopulation(size=POPULATION_SIZE)
 
 analytics = []
 
@@ -95,7 +96,7 @@ if __name__ == "__main__":
         print('Finished simulations')
 
         print('Saving current population to disk...')
-        with open(f'results/population', 'wb') as file:
+        with open(POPULATION_FILE_PATH, 'wb') as file:
             pickle.dump(population, file)
 
         best_simulation_result = max(simulation_results, key=lambda simulation_result: simulation_result['fitness'])
