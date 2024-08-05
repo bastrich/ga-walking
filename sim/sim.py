@@ -27,8 +27,7 @@ class Sim:
 
             current_state = self.env.step(walking_strategy.get_muscles_activations(sim_step))
 
-            if self.is_failed(current_state) or (time.time() - start_time > 10 and not self.visualize):
-            # if self.is_failed(current_state) or time.time() - start_time > 10:
+            if self.is_failed(current_state) or (time.time() - start_time > 20 and not self.visualize):
                 break
 
             self.update_footstep(current_state)
@@ -89,8 +88,6 @@ class Sim:
             self.footstep['n'] += 1
             self.footstep['r_x'] = r_x
             self.footstep['l_x'] = l_x
-            # print(f'new footstep - {self.footstep["n"]}')
-
 
         self.footstep['r_contact'] = r_contact
         self.footstep['l_contact'] = l_contact
@@ -133,15 +130,9 @@ class Sim:
             result += 20
 
             if self.footstep['n'] == 1:
-                if self.fitness_helpers['footstep_duration'] < 0.8 * period // 4 * dt:
-                    result += 10 * self.fitness_helpers['footstep_duration']
-                else:
-                    result += 10 * 0.8 * period // 4 * dt
+                result += 10 * min(self.fitness_helpers['footstep_duration'], 0.8 * period // 4 * dt)
             elif self.footstep['n'] > 1:
-                if self.fitness_helpers['footstep_duration'] < 0.8 * period // 2 * dt:
-                    result += 10 * self.fitness_helpers['footstep_duration']
-                else:
-                    result += 10 * 0.8 * period // 2 * dt
+                result += 10 * min(self.fitness_helpers['footstep_duration'], 0.8 * period // 2 * dt)
 
             # on of the options for calculation of fitness function, used for experiments
             # result += 10 * self.fitness_helpers['footstep_duration']

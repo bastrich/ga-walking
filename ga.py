@@ -18,8 +18,10 @@ from itertools import groupby
 POPULATION_SIZE = 150
 POPULATION_FILE_PATH = 'results/population'
 READ_POPULATION_FROM_FILE = False
-ANALYTICS_FILE_PATH = 'results/analytics_fitness_function_from_design'
+ANALYTICS_FILE_PATH = 'results/analytics_interpolation'
 MODE = '2D'  # 3D
+INITIAL_GENERATION = 'perlin'  # or random
+FRAME_SKIPPING = 'interpolation'  # or interpolation
 PARALLELIZATION = 30
 NUMBER_OF_GENERATIONS = 50
 SIM_STEPS_PER_GENERATION = 1000
@@ -57,7 +59,7 @@ if READ_POPULATION_FROM_FILE:
     with open(POPULATION_FILE_PATH, 'rb') as file:
         population = pickle.load(file)
 else:
-    population = WalkingStrategyPopulation(size=POPULATION_SIZE)
+    population = WalkingStrategyPopulation(size=POPULATION_SIZE, initial_generation=INITIAL_GENERATION, frame_skipping=FRAME_SKIPPING)
 
 analytics = []
 

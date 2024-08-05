@@ -12,7 +12,7 @@ class Muscle:
     SAMPLING_INTERVALS = [5, 10, 20, 40]
     PRECISIONS = [5, 10, 20, 40]
 
-    def __init__(self, period, type=None, sampling_interval=None, precision=None, components=None, initial_generation='perlin'):
+    def __init__(self, period, type=None, sampling_interval=None, precision=None, components=None, initial_generation='perlin', frame_skipping='action_repeat'):
         if period in self.PERIODS:
             self.period = period
         else:
@@ -52,7 +52,9 @@ class Muscle:
         else:
             self.components = components
 
-        self.activations = self.calculate_activations(self.type, self.components, self.period, self.sampling_interval)
+        self.frame_skipping = frame_skipping
+
+        self.activations = self.calculate_activations(self.type, self.components, self.period, self.sampling_interval, self.frame_skipping)
 
     @staticmethod
     def generate_random_components(period, type, sampling_interval, precision, generation):
@@ -82,7 +84,7 @@ class Muscle:
         return interpolator(new_indexes)
 
     @staticmethod
-    def calculate_activations(type, components, period, sampling_interval):
+    def calculate_activations(type, components, period, sampling_interval, frame_skipping):
         if type == 'fourier':
             activations = np.real(np.fft.ifft(np.pad(components, (0, period // sampling_interval - len(components)), 'constant')))
         elif type == 'direct':
@@ -93,7 +95,15 @@ class Muscle:
         else:
             raise ValueError('Logic error: unexpected behavior')
 
-        return activations.repeat(sampling_interval)
+        if frame_skipping == 'action_repeat':
+            return activations.repeat(sampling_interval)
+        elif frame_skipping == 'interpolation':
+            current_indexes = np.arange(len(activations))
+            new_indexes = np.linspace(0, len(activations) - 1, period)
+            interpolator = interp1d(current_indexes, activations, kind='quadratic', fill_value='extrapolate')
+            return interpolator(new_indexes)
+        else:
+            raise ValueError(f'frame_skipping must be action_repeat or interpolation')
 
 
     def get_activation(self, time):
@@ -155,7 +165,8 @@ class Muscle:
             type=self.type,
             sampling_interval=new_sampling_interval,
             precision=new_precision,
-            components=new_components
+            components=new_components,
+            frame_skipping=self.frame_skipping
         )
 
     def mutate_type(self):
@@ -183,7 +194,8 @@ class Muscle:
             type=new_type,
             sampling_interval=self.sampling_interval,
             precision=self.precision,
-            components=new_components
+            components=new_components,
+            frame_skipping=self.frame_skipping
         )
 
     def mutate_sampling_interval(self):
@@ -216,7 +228,8 @@ class Muscle:
             type=self.type,
             sampling_interval=new_sampling_interval,
             precision=self.precision,
-            components=new_components
+            components=new_components,
+            frame_skipping=self.frame_skipping
         )
 
     def mutate_precision(self):
@@ -249,7 +262,8 @@ class Muscle:
             type=self.type,
             sampling_interval=self.sampling_interval,
             precision=new_precision,
-            components=new_components
+            components=new_components,
+            frame_skipping=self.frame_skipping
         )
 
     def mutate_components(self, mutation_rate, mutation_amount):
@@ -263,7 +277,8 @@ class Muscle:
             type=self.type,
             sampling_interval=self.sampling_interval,
             precision=self.precision,
-            components=new_components
+            components=new_components,
+            frame_skipping=self.frame_skipping
         )
 
     def mutate_fourier_components(self, mutation_rate, mutation_amount):
