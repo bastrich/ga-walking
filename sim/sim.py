@@ -132,19 +132,19 @@ class Sim:
         if self.footstep['new']:
             result += 20
 
-            # if self.footstep['n'] == 1:
-            #     if self.fitness_helpers['footstep_duration'] < 0.8 * period // 4 * dt:
-            #         result += 10 * self.fitness_helpers['footstep_duration']
-            #     else:
-            #         result += 10 * 0.8 * period // 4 * dt
-            # elif self.footstep['n'] > 1:
-            #     if self.fitness_helpers['footstep_duration'] < 0.8 * period // 2 * dt:
-            #         result += 10 * self.fitness_helpers['footstep_duration']
-            #     else:
-            #         result += 10 * 0.8 * period // 2 * dt
+            if self.footstep['n'] == 1:
+                if self.fitness_helpers['footstep_duration'] < 0.8 * period // 4 * dt:
+                    result += 10 * self.fitness_helpers['footstep_duration']
+                else:
+                    result += 10 * 0.8 * period // 4 * dt
+            elif self.footstep['n'] > 1:
+                if self.fitness_helpers['footstep_duration'] < 0.8 * period // 2 * dt:
+                    result += 10 * self.fitness_helpers['footstep_duration']
+                else:
+                    result += 10 * 0.8 * period // 2 * dt
 
             # on of the options for calculation of fitness function, used for experiments
-            result += 10 * self.fitness_helpers['footstep_duration']
+            # result += 10 * self.fitness_helpers['footstep_duration']
 
             result -= self.fitness_helpers['footstep_effort']
 
