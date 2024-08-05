@@ -12,7 +12,7 @@ with open('../results/analytics_fitness_function_improved', 'rb') as file:
 plt.plot(x, y1, label='fitness function from Design')
 plt.plot(x, y2, label='improved fitness function')
 plt.xlabel("Generation")
-plt.ylabel("Walking stability")
+plt.ylabel("Walking stability (sim steps alive)")
 plt.xticks([1] + list(range(5, 51, 5)))
 plt.legend()
 plt.show()
