@@ -4,6 +4,7 @@ from sim.parallel_sim import ParallelSim
 import numpy as np
 import pickle
 
+from walking_strategy.muscle import Muscle
 from walking_strategy.population_evaluator import PopulationEvaluator
 from walking_strategy.walking_strategy_population import WalkingStrategyPopulation
 
@@ -111,9 +112,24 @@ if __name__ == "__main__":
             generations_without_improvement += 1
 
         periods_distribution = {period: len(list(periods)) for period, periods in groupby(sorted([simulation_result['walking_strategy'].period for simulation_result in simulation_results]))}
+        for period in Muscle.PERIODS:
+            if period not in periods_distribution.keys():
+                periods_distribution[period] = 0
+
         types_distribution = {type: len(list(types)) for type, types in groupby(sorted(np.concatenate([[muscle.type for muscle in simulation_result['walking_strategy'].muscles] for simulation_result in simulation_results])))}
+        for type in Muscle.TYPES:
+            if type not in types_distribution.keys():
+                types_distribution[type] = 0
+
         sampling_intervals_distribution = {sampling_interval: len(list(sampling_intervals)) for sampling_interval, sampling_intervals in groupby(sorted(np.concatenate([[muscle.sampling_interval for muscle in simulation_result['walking_strategy'].muscles] for simulation_result in simulation_results])))}
+        for sampling_interval in Muscle.SAMPLING_INTERVALS:
+            if sampling_interval not in sampling_intervals_distribution.keys():
+                sampling_intervals_distribution[sampling_interval] = 0
+
         precisions_distribution = {precision: len(list(precisions)) for precision, precisions in groupby(sorted(np.concatenate([[muscle.precision for muscle in simulation_result['walking_strategy'].muscles] for simulation_result in simulation_results])))}
+        for precision in Muscle.PRECISIONS:
+            if precision not in precisions_distribution.keys():
+                precisions_distribution[precision] = 0
 
         print(f'Current fitness: {current_fitness}, Best fitness: {best_fitness}')
 

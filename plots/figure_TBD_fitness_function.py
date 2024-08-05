@@ -1,6 +1,5 @@
 import pickle
 import matplotlib.pyplot as plt
-import numpy as np
 
 x = [i+1 for i in range(50)]
 
