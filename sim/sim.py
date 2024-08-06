@@ -37,11 +37,6 @@ class Sim:
 
             prev_state = current_state
 
-            # time.sleep(0.1)
-
-        # if not self.is_failed(prev_state) and sim_step >= number_of_steps - 1:
-        #     fitness += 50
-
         return np.round(fitness, 2), sim_step + 1, distance, energy
 
     def is_failed(selfself, state):

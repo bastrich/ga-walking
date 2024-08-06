@@ -16,14 +16,14 @@ from itertools import groupby
 
 # configuration options
 POPULATION_SIZE = 150
-POPULATION_FILE_PATH = 'results/population'
+POPULATION_FILE_PATH = 'results/population_2d_1'
 READ_POPULATION_FROM_FILE = False
-ANALYTICS_FILE_PATH = 'results/analytics_interpolation'
+ANALYTICS_FILE_PATH = 'results/analytics_population_2d_1'
 MODE = '2D'  # 3D
 INITIAL_GENERATION = 'perlin'  # or random
-FRAME_SKIPPING = 'interpolation'  # or interpolation
+FRAME_SKIPPING = 'action_repeat'  # or action_repeat
 PARALLELIZATION = 30
-NUMBER_OF_GENERATIONS = 50
+NUMBER_OF_GENERATIONS = 300
 SIM_STEPS_PER_GENERATION = 1000
 MUTABILITY_DECREASE_THRESHOLD = 5
 MUTABILITY_INCREASE_THRESHOLD = 10
