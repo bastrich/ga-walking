@@ -18,7 +18,7 @@ from itertools import groupby
 POPULATION_SIZE = 150
 POPULATION_FILE_PATH = 'results/population'
 READ_POPULATION_FROM_FILE = False
-ANALYTICS_FILE_PATH = 'results/analytics_integrator_accuracy_0_005'
+ANALYTICS_FILE_PATH = 'results/analytics_action_repeat'
 MODE = '2D'  # 3D
 INITIAL_GENERATION = 'perlin'  # or random
 FRAME_SKIPPING = 'action_repeat'  # or action_repeat
@@ -28,7 +28,7 @@ SIM_STEPS_PER_GENERATION = 1000
 MUTABILITY_DECREASE_THRESHOLD = 5
 MUTABILITY_INCREASE_THRESHOLD = 10
 ELITES_RATIO = 0.2
-SIM_INTEGRATOR_ACCURACY = 0.005
+SIM_INTEGRATOR_ACCURACY = 0.001
 
 def update_mutation_parameters(generations_with_improvement, generations_without_improvement, current_mutation_parameters):
     new_mutation_parameters = copy.deepcopy(current_mutation_parameters)
