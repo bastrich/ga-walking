@@ -16,18 +16,19 @@ from itertools import groupby
 
 # configuration options
 POPULATION_SIZE = 150
-POPULATION_FILE_PATH = 'results/population_2d_1'
+POPULATION_FILE_PATH = 'results/population'
 READ_POPULATION_FROM_FILE = False
-ANALYTICS_FILE_PATH = 'results/analytics_population_2d_1'
+ANALYTICS_FILE_PATH = 'results/analytics_integrator_accuracy_0_005'
 MODE = '2D'  # 3D
 INITIAL_GENERATION = 'perlin'  # or random
 FRAME_SKIPPING = 'action_repeat'  # or action_repeat
 PARALLELIZATION = 30
-NUMBER_OF_GENERATIONS = 300
+NUMBER_OF_GENERATIONS = 50
 SIM_STEPS_PER_GENERATION = 1000
 MUTABILITY_DECREASE_THRESHOLD = 5
 MUTABILITY_INCREASE_THRESHOLD = 10
 ELITES_RATIO = 0.2
+SIM_INTEGRATOR_ACCURACY = 0.005
 
 def update_mutation_parameters(generations_with_improvement, generations_without_improvement, current_mutation_parameters):
     new_mutation_parameters = copy.deepcopy(current_mutation_parameters)
@@ -66,7 +67,7 @@ analytics = []
 # required for multiprocessing
 if __name__ == "__main__":
 
-    parallel_sim = ParallelSim(mode=MODE, parallelization=PARALLELIZATION)
+    parallel_sim = ParallelSim(mode=MODE, parallelization=PARALLELIZATION, integrator_accuracy = SIM_INTEGRATOR_ACCURACY)
     population_evaluator = PopulationEvaluator(parallelization=PARALLELIZATION)
 
     def shutdown_hook():
@@ -99,7 +100,7 @@ if __name__ == "__main__":
         simulation_duration = time.time() - simulation_start_time
         print('Finished simulations')
 
-        print('Saving current population to disk...')
+        print(f'Saving current population to {POPULATION_FILE_PATH}')
         with open(POPULATION_FILE_PATH, 'wb') as file:
             pickle.dump(population, file)
 
@@ -143,7 +144,7 @@ if __name__ == "__main__":
         population = population_evaluator.breed_new_population(simulation_results, mutation_parameters, ELITES_RATIO)
         evaluation_duration = time.time() - evaluation_start_time
 
-        print('Saving analytics to disk...')
+        print(f'Saving analytics to {ANALYTICS_FILE_PATH}')
         analytics.append({
             'fitness': current_fitness,
             'simulation_duration': np.round(simulation_duration),

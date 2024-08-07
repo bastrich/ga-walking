@@ -3,21 +3,22 @@ from multiprocessing import Process, Queue
 
 class ParallelSim:
 
-    def __init__(self, mode, parallelization):
+    def __init__(self, mode, parallelization, integrator_accuracy):
         self.mode = mode
         self.parallelization = parallelization
+        self.integrator_accuracy = integrator_accuracy
         self.input_queue = Queue()
         self.output_queue = Queue()
         self.processes = []
         for _ in range(self.parallelization):
-            process = Process(target=self.simulation_worker, args=(self.mode, self.input_queue, self.output_queue))
+            process = Process(target=self.simulation_worker, args=(self.mode, self.integrator_accuracy, self.input_queue, self.output_queue))
             self.processes.append(process)
             process.start()
 
     @staticmethod
-    def simulation_worker(mode, input_queue, output_queue):
+    def simulation_worker(mode, integrator_accuracy, input_queue, output_queue):
         try:
-            sim = Sim(mode, False)
+            sim = Sim(mode, False, integrator_accuracy)
             while True:
                 task = input_queue.get()
                 if task is None:

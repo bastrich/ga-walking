@@ -23,7 +23,7 @@ class OsimModel:
     maxforces = []
     curforces = []
 
-    def __init__(self, model_path, visualize):
+    def __init__(self, model_path, visualize, integrator_accuracy=0.001):
         self.model = opensim.Model(model_path)
         self.model_state = self.model.initSystem()
         self.brain = opensim.PrescribedController()
@@ -51,6 +51,8 @@ class OsimModel:
 
         self.model.addController(self.brain)
         self.model_state = self.model.initSystem()
+
+        self.integrator_accuracy = integrator_accuracy
 
         self.visualizer = self.model.getVisualizer() if visualize else None
 
@@ -149,7 +151,7 @@ class OsimModel:
 
     def reset_manager(self):
         self.manager = opensim.Manager(self.model)
-        self.manager.setIntegratorAccuracy(0.001)
+        self.manager.setIntegratorAccuracy(self.integrator_accuracy)
         self.manager.initialize(self.state)
 
     def get_state(self):
@@ -219,7 +221,7 @@ class SimEnv():
 
     visualize = False
 
-    def __init__(self, mode, visualize):
+    def __init__(self, mode, visualize, integrator_accuracy=0.001):
         if mode == '3D':
             model_path = os.path.join(os.path.dirname(__file__), '../models/3d.osim')
         elif mode == '2D':
@@ -228,7 +230,7 @@ class SimEnv():
             raise ValueError('Invalid mode')
 
         self.visualize = visualize
-        self.osim_model = OsimModel(model_path, self.visualize)
+        self.osim_model = OsimModel(model_path, self.visualize, integrator_accuracy)
 
         self.Fmax = {}
         self.lopt = {}
@@ -238,8 +240,8 @@ class SimEnv():
             for MUS, mus in zip(    ['HAB', 'HAD', 'HFL', 'GLU', 'HAM', 'RF', 'VAS', 'BFSH', 'GAS', 'SOL', 'TA'],
                                     ['abd', 'add', 'iliopsoas', 'glut_max', 'hamstrings', 'rect_fem', 'vasti', 'bifemsh', 'gastroc', 'soleus', 'tib_ant']):
                 muscle = self.osim_model.muscleSet.get('{}_{}'.format(mus,side))
-                Fmax = muscle.getMaxIsometricForce()
-                lopt = muscle.getOptimalFiberLength()
+                # Fmax = muscle.getMaxIsometricForce()
+                # lopt = muscle.getOptimalFiberLength()
                 self.Fmax[leg][MUS] = muscle.getMaxIsometricForce()
                 self.lopt[leg][MUS] = muscle.getOptimalFiberLength()
 

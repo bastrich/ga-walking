@@ -4,10 +4,10 @@ import time
 
 class Sim:
 
-    def __init__(self, mode, visualize):
+    def __init__(self, mode, visualize, integrator_accuracy=0.001):
         self.visualize = visualize
         self.mode = mode
-        self.env = SimEnv(mode, visualize)
+        self.env = SimEnv(mode, visualize, integrator_accuracy)
         self.fitness_helpers = {}
         self.footstep = {}
 
