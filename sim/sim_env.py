@@ -54,8 +54,6 @@ class OsimModel:
 
         self.integrator_accuracy = integrator_accuracy
 
-        self.visualizer = self.model.getVisualizer() if visualize else None
-
     def actuate(self, action):
         if np.any(np.isnan(action)):
             raise ValueError("NaN passed in the activation vector. Values in [0,1] interval are required.")
@@ -248,7 +246,6 @@ class SimEnv():
         self.last_x = 0
         self.delta_of_last_step = 0
 
-        self.visualizer = self.osim_model.model.updVisualizer().updSimbodyVisualizer() if visualize else None
         self.last_line_idx = None
 
     def reset(self):
@@ -292,12 +289,6 @@ class SimEnv():
 
         self.osim_model.reset_manager()
 
-        d = self.get_state_desc()
-        pose = np.array([d['body_pos']['pelvis'][0], -d['body_pos']['pelvis'][2], d['joint_pos']['ground_pelvis'][2]])
-        # self.v_tgt_field, self.flag_new_v_tgt_field = self.vtgt.update(pose)
-
-
-        self.visualizer = self.osim_model.model.updVisualizer().updSimbodyVisualizer() if self.visualize else None
         self.last_line_idx = None
 
         return self.get_state_desc()
