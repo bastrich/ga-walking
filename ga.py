@@ -18,7 +18,7 @@ from itertools import groupby
 POPULATION_SIZE = 150
 POPULATION_FILE_PATH = 'results/population'
 READ_POPULATION_FROM_FILE = False
-ANALYTICS_FILE_PATH = 'results/analytics_action_repeat'
+ANALYTICS_FILE_PATH = 'results/analytics_fourier'
 MODE = '2D'  # 3D
 INITIAL_GENERATION = 'perlin'  # or random
 FRAME_SKIPPING = 'action_repeat'  # or action_repeat
