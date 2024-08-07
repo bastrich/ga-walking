@@ -4,6 +4,9 @@ import time
 
 class Sim:
 
+    MASS = 75.16460000000001
+    G = 9.80665
+
     def __init__(self, mode, visualize, integrator_accuracy=0.001):
         self.visualize = visualize
         self.mode = mode
@@ -61,8 +64,8 @@ class Sim:
         self.footstep['last_step'] = 'l'
 
     def update_footstep(self, current_state):
-        r_contact = True if current_state['forces']['foot_r'][1] < -0.05*(self.env.MASS*self.env.G) else False
-        l_contact = True if current_state['forces']['foot_l'][1] < -0.05*(self.env.MASS*self.env.G) else False
+        r_contact = True if current_state['forces']['foot_r'][1] < -0.05*(self.MASS*self.G) else False
+        l_contact = True if current_state['forces']['foot_l'][1] < -0.05*(self.MASS*self.G) else False
         r_x = current_state['body_pos']['calcn_r'][0]
         l_x = current_state['body_pos']['calcn_l'][0]
 
@@ -94,7 +97,7 @@ class Sim:
         return min(r_x, l_x) <= pelvis_x <= max(r_x, l_x)
 
     def calculate_current_fitness(self, prev_state, current_state, period):
-        result = 0.1
+        result = 0.05
         dt = self.env.osim_model.stepsize
 
         self.fitness_helpers['footstep_effort'] += self.calculate_current_energy(current_state)
