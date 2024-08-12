@@ -1,7 +1,7 @@
 from walking_strategy.muscle import Muscle
 import matplotlib.pyplot as plt
 
-muscle = Muscle(period=200)
+muscle = Muscle(period=200, mode='2D')
 print(muscle)
 
 x = [i for i in range(muscle.period)]

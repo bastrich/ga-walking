@@ -17,13 +17,13 @@ from itertools import groupby
 # configuration options
 POPULATION_SIZE = 150
 POPULATION_FILE_PATH = 'results/population_3d'
-READ_POPULATION_FROM_FILE = True
+READ_POPULATION_FROM_FILE = False
 ANALYTICS_FILE_PATH = 'results/analytics_population_3d'
 MODE = '3D'  # 3D
 INITIAL_GENERATION = 'perlin'  # or random
 FRAME_SKIPPING = 'action_repeat'  # or action_repeat
 PARALLELIZATION = 30
-NUMBER_OF_GENERATIONS = 300
+NUMBER_OF_GENERATIONS = 2000
 SIM_STEPS_PER_GENERATION = 1000
 MUTABILITY_DECREASE_THRESHOLD = 5
 MUTABILITY_INCREASE_THRESHOLD = 10
@@ -60,7 +60,7 @@ if READ_POPULATION_FROM_FILE:
     with open(POPULATION_FILE_PATH, 'rb') as file:
         population = pickle.load(file)
 else:
-    population = WalkingStrategyPopulation(size=POPULATION_SIZE, initial_generation=INITIAL_GENERATION, frame_skipping=FRAME_SKIPPING)
+    population = WalkingStrategyPopulation(mode=MODE, size=POPULATION_SIZE, initial_generation=INITIAL_GENERATION, frame_skipping=FRAME_SKIPPING)
 
 analytics = []
 
@@ -125,12 +125,12 @@ if __name__ == "__main__":
                 types_distribution[type] = 0
 
         sampling_intervals_distribution = {sampling_interval: len(list(sampling_intervals)) for sampling_interval, sampling_intervals in groupby(sorted(np.concatenate([[muscle.sampling_interval for muscle in simulation_result['walking_strategy'].muscles] for simulation_result in simulation_results])))}
-        for sampling_interval in Muscle.SAMPLING_INTERVALS:
+        for sampling_interval in (Muscle.SAMPLING_INTERVALS_2D if MODE == '2D' else Muscle.SAMPLING_INTERVALS_3D):
             if sampling_interval not in sampling_intervals_distribution.keys():
                 sampling_intervals_distribution[sampling_interval] = 0
 
         precisions_distribution = {precision: len(list(precisions)) for precision, precisions in groupby(sorted(np.concatenate([[muscle.precision for muscle in simulation_result['walking_strategy'].muscles] for simulation_result in simulation_results])))}
-        for precision in Muscle.PRECISIONS:
+        for precision in (Muscle.PRECISIONS_2D if MODE == '2D' else Muscle.PRECISIONS_3D):
             if precision not in precisions_distribution.keys():
                 precisions_distribution[precision] = 0
 

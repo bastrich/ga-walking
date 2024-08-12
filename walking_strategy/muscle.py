@@ -9,10 +9,24 @@ class Muscle:
 
     TYPES = ['direct', 'fourier']
     PERIODS = [120, 160, 200, 240, 320, 400]
-    SAMPLING_INTERVALS = [5, 10, 20, 40]
-    PRECISIONS = [5, 10, 20, 40]
 
-    def __init__(self, period, type=None, sampling_interval=None, precision=None, components=None, initial_generation='perlin', frame_skipping='action_repeat'):
+    SAMPLING_INTERVALS_2D = [5, 10, 20, 40]
+    PRECISIONS_2D = [5, 10, 20, 40]
+
+    SAMPLING_INTERVALS_3D = [5, 10]
+    PRECISIONS_3D = [8, 16, 32]
+
+    def __init__(self, period, mode, type=None, sampling_interval=None, precision=None, components=None, initial_generation='perlin', frame_skipping='action_repeat'):
+        if mode not in ['2D', '3D']:
+            raise ValueError(f'mode must be one of 2D or 3D')
+        self.mode = mode
+        if self.mode == '2D':
+            self.PRECISIONS = self.PRECISIONS_2D
+            self.SAMPLING_INTERVALS = self.SAMPLING_INTERVALS_2D
+        else:
+            self.PRECISIONS = self.PRECISIONS_3D
+            self.SAMPLING_INTERVALS = self.SAMPLING_INTERVALS_3D
+
         if period in self.PERIODS:
             self.period = period
         else:
@@ -162,6 +176,7 @@ class Muscle:
 
         return Muscle(
             period=period,
+            mode=self.mode,
             type=self.type,
             sampling_interval=new_sampling_interval,
             precision=new_precision,
@@ -191,6 +206,7 @@ class Muscle:
 
         return Muscle(
             period=self.period,
+            mode=self.mode,
             type=new_type,
             sampling_interval=self.sampling_interval,
             precision=self.precision,
@@ -225,6 +241,7 @@ class Muscle:
 
         return Muscle(
             period=self.period,
+            mode=self.mode,
             type=self.type,
             sampling_interval=new_sampling_interval,
             precision=self.precision,
@@ -259,6 +276,7 @@ class Muscle:
 
         return Muscle(
             period=self.period,
+            mode=self.mode,
             type=self.type,
             sampling_interval=self.sampling_interval,
             precision=new_precision,
@@ -274,6 +292,7 @@ class Muscle:
 
         return Muscle(
             period=self.period,
+            mode=self.mode,
             type=self.type,
             sampling_interval=self.sampling_interval,
             precision=self.precision,

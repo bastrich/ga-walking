@@ -1,7 +1,7 @@
 import pickle
 import matplotlib.pyplot as plt
 
-with open('../results/analytics_direct', 'rb') as file:
+with open('../results/analytics_population_3d', 'rb') as file:
     analytics = [analytics['types_distribution'] for analytics in pickle.load(file)]
 
 x = [i + 1 for i in range(len(analytics))]

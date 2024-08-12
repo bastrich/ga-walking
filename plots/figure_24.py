@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
-muscle = Muscle(period=200)
+muscle = Muscle(period=200, mode='2D')
 print(muscle)
 
 x = [i for i in range(muscle.period)]

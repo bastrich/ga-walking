@@ -34,7 +34,12 @@ class Sim:
                 break
 
             self.update_footstep(current_state)
-            fitness += self.calculate_current_fitness(prev_state, current_state, walking_strategy.period)
+
+            if self.mode == '2D':
+                fitness += self.calculate_2d_fitness(prev_state, current_state, walking_strategy.period)
+            else:
+                fitness += self.calculate_3d_fitness(prev_state, current_state, walking_strategy.period, sim_step)
+
             distance += self.calculate_current_distance_delta(prev_state, current_state)
             energy += self.calculate_current_energy(current_state)
 
@@ -42,7 +47,7 @@ class Sim:
 
         return np.round(fitness, 2), sim_step + 1, distance, energy
 
-    def is_failed(selfself, state):
+    def is_failed(self, state):
         return state['body_pos']['pelvis'][1] < 0.6
 
     def init_fitness_helpers(self):
@@ -96,8 +101,8 @@ class Sim:
         l_x = current_state['body_pos']['calcn_l'][0]
         return min(r_x, l_x) <= pelvis_x <= max(r_x, l_x)
 
-    def calculate_current_fitness(self, prev_state, current_state, period):
-        result = 0.05
+    def calculate_2d_fitness(self, prev_state, current_state, period):
+        result = 0.1
         dt = self.env.osim_model.stepsize
 
         self.fitness_helpers['footstep_effort'] += self.calculate_current_energy(current_state)
@@ -109,20 +114,19 @@ class Sim:
 
         result += 10 * distance_traveled * np.abs(distance_traveled) / np.linalg.norm(np.array([current_state['body_pos']['pelvis'][0], current_state['body_pos']['pelvis'][2]]) - np.array([prev_state['body_pos']['pelvis'][0], prev_state['body_pos']['pelvis'][2]]))
 
-        if self.mode == '3D':
-            right_hip = np.array([current_state['body_pos']['femur_r'][0], current_state['body_pos']['femur_r'][2]])
-            left_hip = np.array([current_state['body_pos']['femur_l'][0], current_state['body_pos']['femur_l'][2]])
-            right_heel = np.array([current_state['body_pos']['calcn_r'][0], current_state['body_pos']['calcn_r'][2]])
-            left_heel = np.array([current_state['body_pos']['calcn_l'][0], current_state['body_pos']['calcn_l'][2]])
-            hips = left_hip - right_hip
-            hips_unit = hips / np.linalg.norm(hips)
-            mid_hip = (left_hip + right_hip) / 2
-            mid_hip_right_heel = right_heel - mid_hip
-            mid_hip_left_heel = left_heel - mid_hip
-            projection_right_heel = np.dot(mid_hip_right_heel, hips_unit)
-            projection_left_heel = np.dot(mid_hip_left_heel, hips_unit)
-            if projection_right_heel > projection_left_heel:
-                result -= 1
+        right_hip = np.array([current_state['body_pos']['femur_r'][0], current_state['body_pos']['femur_r'][2]])
+        left_hip = np.array([current_state['body_pos']['femur_l'][0], current_state['body_pos']['femur_l'][2]])
+        right_heel = np.array([current_state['body_pos']['calcn_r'][0], current_state['body_pos']['calcn_r'][2]])
+        left_heel = np.array([current_state['body_pos']['calcn_l'][0], current_state['body_pos']['calcn_l'][2]])
+        hips = left_hip - right_hip
+        hips_unit = hips / np.linalg.norm(hips)
+        mid_hip = (left_hip + right_hip) / 2
+        mid_hip_right_heel = right_heel - mid_hip
+        mid_hip_left_heel = left_heel - mid_hip
+        projection_right_heel = np.dot(mid_hip_right_heel, hips_unit)
+        projection_left_heel = np.dot(mid_hip_left_heel, hips_unit)
+        if projection_right_heel > projection_left_heel:
+            result -= 1
 
         if self.footstep['new']:
             result += 20
@@ -141,6 +145,58 @@ class Sim:
             self.fitness_helpers['footstep_duration'] = 0
             self.fitness_helpers['footstep_effort'] = 0
         return result
+
+
+    def calculate_3d_fitness(self, prev_state, current_state, period, sim_step):
+        result = 0
+
+        if sim_step < period:
+            result += 0.1
+
+        if current_state['body_pos']['pelvis'][1] < 0.7:
+            result -= 1
+
+        if abs(current_state['body_pos']['pelvis'][2]) > 0.5:
+            result -= 1
+
+        if current_state['body_pos']['head'][1] - current_state['body_pos']['pelvis'][1] < 0.4:
+            result -= 1
+
+        if abs(current_state['body_pos']['femur_r'][0] - current_state['body_pos']['femur_l'][0]) > 0.12:
+            result -= 1
+
+        if current_state['body_pos']['pelvis'][0] < -0.2:
+            result -= 1
+
+        dt = self.env.osim_model.stepsize
+
+        self.fitness_helpers['footstep_effort'] += self.calculate_current_energy(current_state)
+
+        self.fitness_helpers['footstep_duration'] += dt
+
+        distance_traveled = current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]
+        self.fitness_helpers['footstep_delta_x'] += distance_traveled
+
+        result += 30 * distance_traveled * np.abs(distance_traveled) / np.linalg.norm(np.array([current_state['body_pos']['pelvis'][0], current_state['body_pos']['pelvis'][2]]) - np.array([prev_state['body_pos']['pelvis'][0], prev_state['body_pos']['pelvis'][2]]))
+
+        right_hip = np.array([current_state['body_pos']['femur_r'][0], current_state['body_pos']['femur_r'][2]])
+        left_hip = np.array([current_state['body_pos']['femur_l'][0], current_state['body_pos']['femur_l'][2]])
+        right_heel = np.array([current_state['body_pos']['calcn_r'][0], current_state['body_pos']['calcn_r'][2]])
+        left_heel = np.array([current_state['body_pos']['calcn_l'][0], current_state['body_pos']['calcn_l'][2]])
+        hips = left_hip - right_hip
+        hips_unit = hips / np.linalg.norm(hips)
+        mid_hip = (left_hip + right_hip) / 2
+        mid_hip_right_heel = right_heel - mid_hip
+        mid_hip_left_heel = left_heel - mid_hip
+        projection_right_heel = np.dot(mid_hip_right_heel, hips_unit)
+        projection_left_heel = np.dot(mid_hip_left_heel, hips_unit)
+        if projection_right_heel > projection_left_heel:
+            result -= 1
+
+        if self.footstep['new']:
+            result += 20
+        return result
+
 
     def calculate_current_distance_delta(self, prev_state, current_state):
         return current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]

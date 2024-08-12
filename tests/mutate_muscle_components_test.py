@@ -1,7 +1,7 @@
 from walking_strategy.muscle import Muscle
 import matplotlib.pyplot as plt
 
-muscle = Muscle(period=200, type='fourier')
+muscle = Muscle(period=200, mode='2D', type='fourier')
 print(muscle)
 
 x1 = [i for i in range(muscle.period)]
