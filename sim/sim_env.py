@@ -2,29 +2,43 @@ import numpy as np
 from sim.osim_model import OsimModel
 
 
-class SimEnv():
+class SimEnv:
 
     act2mus = [0, 1, 4, 7, 3, 2, 5, 6, 8, 9, 10, 11, 12, 15, 18, 14, 13, 16, 17, 19, 20, 21]
 
-    INIT_POSE = np.array([
-        0, # forward speed
-        0, # rightward speed
-        0.94, # pelvis height
-        0*np.pi/180, # trunk lean
-        0*np.pi/180, # [right] hip adduct
-        0*np.pi/180, # hip flex
-        0*np.pi/180, # knee extend
-        # -40 * np.pi / 180,  # hip flex
-        # -80 * np.pi / 180,  # knee extend
-        0*np.pi/180, # ankle flex
-        0*np.pi/180, # [left] hip adduct
-        0*np.pi/180, # hip flex
-        0*np.pi/180, # knee extend
-        0*np.pi/180 # ankle flex
-    ])
-
     def __init__(self, mode, visualize, integrator_accuracy=0.001):
         self.osim_model = OsimModel(mode, visualize, integrator_accuracy)
+
+        if mode == '2D':
+            self.init_pose = np.array([
+                0, # forward speed
+                0, # rightward speed
+                0.94, # pelvis height
+                0*np.pi/180, # trunk lean
+                0*np.pi/180, # [right] hip adduct
+                -40 * np.pi / 180,  # hip flex
+                -80 * np.pi / 180,  # knee extend
+                0*np.pi/180, # ankle flex
+                0*np.pi/180, # [left] hip adduct
+                0*np.pi/180, # hip flex
+                0*np.pi/180, # knee extend
+                0*np.pi/180 # ankle flex
+            ])
+        else:
+            self.init_pose = np.array([
+                0, # forward speed
+                0, # rightward speed
+                0.94, # pelvis height
+                0*np.pi/180, # trunk lean
+                0*np.pi/180, # [right] hip adduct
+                0*np.pi/180, # hip flex
+                0*np.pi/180, # knee extend
+                0*np.pi/180, # ankle flex
+                0*np.pi/180, # [left] hip adduct
+                0*np.pi/180, # hip flex
+                0*np.pi/180, # knee extend
+                0*np.pi/180 # ankle flex
+            ])
 
         self.Fmax = {}
         self.lopt = {}
@@ -42,7 +56,6 @@ class SimEnv():
     def reset(self):
         # initialize state
         self.osim_model.state = self.osim_model.model.initializeState()
-        init_pose = self.INIT_POSE
         state = self.osim_model.get_state()
         QQ = state.getQ()
         QQDot = state.getQDot()
@@ -52,18 +65,18 @@ class SimEnv():
         QQ[5] = 0 # z: (+) right
         QQ[1] = 0*np.pi/180 # roll
         QQ[2] = 0*np.pi/180 # yaw
-        QQDot[3] = init_pose[0] # forward speed
-        QQDot[5] = init_pose[1] # forward speed
-        QQ[4] = init_pose[2] # pelvis height
-        QQ[0] = -init_pose[3] # trunk lean: (+) backward
-        QQ[7] = -init_pose[4] # right hip abduct
-        QQ[6] = -init_pose[5] # right hip flex
-        QQ[13] = init_pose[6] # right knee extend
-        QQ[15] = -init_pose[7] # right ankle flex
-        QQ[10] = -init_pose[8] # left hip adduct
-        QQ[9] = -init_pose[9] # left hip flex
-        QQ[14] = init_pose[10] # left knee extend
-        QQ[16] = -init_pose[11] # left ankle flex
+        QQDot[3] = self.init_pose[0] # forward speed
+        QQDot[5] = self.init_pose[1] # forward speed
+        QQ[4] = self.init_pose[2] # pelvis height
+        QQ[0] = -self.init_pose[3] # trunk lean: (+) backward
+        QQ[7] = -self.init_pose[4] # right hip abduct
+        QQ[6] = -self.init_pose[5] # right hip flex
+        QQ[13] = self.init_pose[6] # right knee extend
+        QQ[15] = -self.init_pose[7] # right ankle flex
+        QQ[10] = -self.init_pose[8] # left hip adduct
+        QQ[9] = -self.init_pose[9] # left hip flex
+        QQ[14] = self.init_pose[10] # left knee extend
+        QQ[16] = -self.init_pose[11] # left ankle flex
 
         state.setQ(QQ)
         state.setU(QQDot)
