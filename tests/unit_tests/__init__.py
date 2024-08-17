@@ -1,0 +1,1 @@
+# required for tests auto discovery
