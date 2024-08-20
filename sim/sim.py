@@ -3,11 +3,26 @@ import numpy as np
 import time
 
 class Sim:
+    """
+    Runs and manages the simulation of a walking strategy in the OpenSim environment.
+
+    Attributes:
+        MASS (float): The mass of a human model.
+        G (float): The gravitational constant.
+        mode (str): 2D or 3D.
+        visualize (bool): Visualize or not.
+        env (SimEnv): Simulation environment.
+        fitness_helpers (dict): Intermediate fitness calculation data.
+        footstep (dict): Footstep-related information during the simulation.
+    """
 
     MASS = 75.16460000000001
     G = 9.80665
 
     def __init__(self, mode, visualize, integrator_accuracy=0.001):
+        """
+        Initializes the simulation environment and sets up helper structures for fitness calculation.
+        """
         self.visualize = visualize
         self.mode = mode
         self.env = SimEnv(mode, visualize, integrator_accuracy)
@@ -15,6 +30,12 @@ class Sim:
         self.footstep = {}
 
     def run(self, walking_strategy, number_of_steps=1000):
+        """
+        Runs the simulation for the walking strategy for specified number of steps.
+
+        Returns:
+        tuple: A tuple containing the fitness score (float), the number of completed simulation steps (int), the total distance traveled (float), and the total energy spent (float).
+        """
         prev_state = self.env.reset()
 
         self.init_fitness_helpers()
@@ -22,7 +43,6 @@ class Sim:
         fitness = 0
         distance = 0
         energy = 0
-
 
         start_time = time.time()
 
@@ -48,18 +68,22 @@ class Sim:
         return np.round(fitness, 2), sim_step + 1, distance, energy
 
     def is_failed(self, state):
+        """
+        Checks if the model has fallen.
+        """
         return state['body_pos']['pelvis'][1] < 0.6
 
     def init_fitness_helpers(self):
-        self.fitness_helpers['alive'] = 0.1
+        """
+        Initializes the fitness data.
+        """
         self.fitness_helpers['footstep_effort'] = 0
         self.fitness_helpers['footstep_duration'] = 0
-        self.fitness_helpers['footstep_delta_x'] = 0
-        self.fitness_helpers['footstep_delta_v'] = np.array([0.0, 0.0])
-        self.fitness_helpers['footstep_side_error'] = 0
-        self.fitness_helpers['footstep_x_error'] = 0
 
     def init_footstep_info(self, state):
+        """
+        Initializes the footstep tracking data.
+        """
         self.footstep['n'] = 0
         self.footstep['new'] = False
         self.footstep['r_contact'] = True
@@ -69,18 +93,21 @@ class Sim:
         self.footstep['last_step'] = 'l'
 
     def update_footstep(self, current_state):
+        """
+        Counts footsteps based on the current state of the simulation.
+        """
         r_contact = True if current_state['forces']['foot_r'][1] < -0.05*(self.MASS*self.G) else False
         l_contact = True if current_state['forces']['foot_l'][1] < -0.05*(self.MASS*self.G) else False
         r_x = current_state['body_pos']['calcn_r'][0]
         l_x = current_state['body_pos']['calcn_l'][0]
 
         self.footstep['new'] = False
-        pelvis_is_between_foots = self.pelvis_is_between_foots(current_state)
+        pelvis_is_between_feet = self.pelvis_is_between_feet(current_state)
 
-        if pelvis_is_between_foots and not self.footstep['r_contact'] and r_contact and r_x > self.footstep['r_x'] and r_x > l_x and r_x > self.footstep['l_x'] and self.footstep['last_step'] == 'l':
+        if pelvis_is_between_feet and not self.footstep['r_contact'] and r_contact and r_x > self.footstep['r_x'] and r_x > l_x and r_x > self.footstep['l_x'] and self.footstep['last_step'] == 'l':
             footstep_made = True
             self.footstep['last_step'] = 'r'
-        elif pelvis_is_between_foots and not self.footstep['l_contact'] and l_contact and l_x > self.footstep['l_x'] and l_x > r_x and l_x > self.footstep['r_x'] and self.footstep['last_step'] == 'r':
+        elif pelvis_is_between_feet and not self.footstep['l_contact'] and l_contact and l_x > self.footstep['l_x'] and l_x > r_x and l_x > self.footstep['r_x'] and self.footstep['last_step'] == 'r':
             footstep_made = True
             self.footstep['last_step'] = 'l'
         else:
@@ -95,13 +122,19 @@ class Sim:
         self.footstep['r_contact'] = r_contact
         self.footstep['l_contact'] = l_contact
 
-    def pelvis_is_between_foots(self, current_state):
+    def pelvis_is_between_feet(self, current_state):
+        """
+        Checks if the pelvis currently is between the feet.
+        """
         pelvis_x = current_state['body_pos']['pelvis'][0]
         r_x = current_state['body_pos']['calcn_r'][0]
         l_x = current_state['body_pos']['calcn_l'][0]
         return min(r_x, l_x) <= pelvis_x <= max(r_x, l_x)
 
     def calculate_2d_fitness(self, prev_state, current_state, period):
+        """
+        Calculates the fitness value for 2D simulation.
+        """
         result = 0.1
         dt = self.env.osim_model.stepsize
 
@@ -141,13 +174,15 @@ class Sim:
 
             result -= self.fitness_helpers['footstep_effort']
 
-
             self.fitness_helpers['footstep_duration'] = 0
             self.fitness_helpers['footstep_effort'] = 0
         return result
 
 
     def calculate_3d_fitness(self, prev_state, current_state, period, sim_step):
+        """
+        Calculates the fitness value for 3D simulation.
+        """
         result = 0
 
         if sim_step < period:
@@ -197,14 +232,18 @@ class Sim:
             result += 20
         return result
 
-
     def calculate_current_distance_delta(self, prev_state, current_state):
+        """
+        Calculates the x-axis delta between the previous and the current simulation steps.
+        """
         return current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]
 
     def calculate_current_energy(self, current_state):
+        """
+        Calculates the energy spent by muscle in the current simulation step.
+        """
         dt = self.env.osim_model.stepsize
         ACT2 = 0
         for muscle in current_state['muscles'].keys():
             ACT2 += np.square(current_state['muscles'][muscle]['activation'])
         return ACT2 * dt
-

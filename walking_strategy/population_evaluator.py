@@ -5,10 +5,20 @@ from walking_strategy.walking_strategy_population import WalkingStrategyPopulati
 
 
 class PopulationEvaluator:
+    """
+    Runs parallel evaluation of population
+
+    Attributes:
+        populations_executor (ProcessPoolExecutor): process pool that manages parallel processes for evaluation.
+    """
+
     def __init__(self, parallelization):
         self.populations_executor = ProcessPoolExecutor(max_workers=parallelization)
 
     def breed_new_population(self, simulation_results, mutation_parameters, elites_ratio):
+        """
+        Runs parallel breeding and mutation of new walking strategies.
+        """
         new_walking_strategies = []
 
         print('Preserving elites...')
@@ -44,6 +54,9 @@ class PopulationEvaluator:
 
     @staticmethod
     def breed_new_walking_strategy(walking_strategies, fit_map, mutation_rate, period_mutation_rate, type_mutation_rate, sampling_interval_mutation_rate, precision_mutation_rate, components_mutation_rate, components_mutation_amount):
+        """
+        Runs breeding and mutation of a single walking strategy.
+        """
         parent1, parent2 = np.random.choice(walking_strategies, size=2, p=fit_map)
         new_walking_strategy = parent1.crossover(parent2)
         new_walking_strategy = new_walking_strategy.mutate(mutation_rate, period_mutation_rate, type_mutation_rate, sampling_interval_mutation_rate, precision_mutation_rate, components_mutation_rate, components_mutation_amount)

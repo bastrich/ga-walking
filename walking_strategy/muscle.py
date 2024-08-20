@@ -6,6 +6,25 @@ from scipy.interpolate import interp1d
 import copy
 
 class Muscle:
+    """
+    Represents genotype and phenotype of a single muscle
+
+    Attributes:
+        TYPES (list): List of available values for genotype type.
+        PERIODS (list): List of available periods.
+        SAMPLING_INTERVALS_2D (list): List of available sampling intervals for 2D env.
+        PRECISIONS_2D (list): List of available precisions for 2D env.
+        SAMPLING_INTERVALS_3D (list): List of available sampling intervals for 3D env.
+        PRECISIONS_3D (list): List of available precisions for 3D env.
+        mode (str): 2D or 3D.
+        type (str): Type of representation of activation values, 'direct' or 'fourier'.
+        period (int): numbers of simulation steps in a single walking period.
+        precision (int): how many values to use to represent activation function.
+        sampling_interval (int): how often to change activation values, simulation steps.
+        components (list): list of real or complex values representing activation function.
+        activations (list): phenotype, values of calculated activation function.
+        frame_skipping (str): use action_repeat or interpolation for frame skipping.
+    """
 
     TYPES = ['direct', 'fourier']
     PERIODS = [120, 160, 200, 240, 320, 400]
@@ -17,6 +36,13 @@ class Muscle:
     PRECISIONS_3D = [8, 16, 32]
 
     def __init__(self, period, mode, type=None, sampling_interval=None, precision=None, components=None, initial_generation='perlin', frame_skipping='action_repeat'):
+        """
+        Initiates a muscle.
+
+        Args:
+            initial_generation (str): How to generate initial activation function: perlin or random.
+            Other arguments are described in the class attributes.
+        """
         if mode not in ['2D', '3D']:
             raise ValueError(f'mode must be one of 2D or 3D')
         self.mode = mode
@@ -72,6 +98,9 @@ class Muscle:
 
     @staticmethod
     def generate_random_components(period, type, sampling_interval, precision, generation):
+        """
+        Generates random activation function and calculates its components.
+        """
         if generation == 'perlin':
             noise = PerlinNoise(octaves=np.random.uniform(low=0.4, high=3))
             activations = np.array([noise(i / (period // sampling_interval)) for i in range(period // sampling_interval)])
@@ -99,6 +128,9 @@ class Muscle:
 
     @staticmethod
     def calculate_activations(type, components, period, sampling_interval, frame_skipping):
+        """
+        Calculates activation function (phenotype) from genotype.
+        """
         if type == 'fourier':
             activations = np.real(np.fft.ifft(np.pad(components, (0, period // sampling_interval - len(components)), 'constant')))
         elif type == 'direct':
@@ -121,9 +153,15 @@ class Muscle:
 
 
     def get_activation(self, time):
+        """
+        Provides muscle activation value at specified time.
+        """
         return self.activations[time % self.period]
 
     def with_period(self, period):
+        """
+        Creates a new instance of Muscle with modified period.
+        """
         if period == self.period:
             return self
 
@@ -185,6 +223,9 @@ class Muscle:
         )
 
     def mutate_type(self):
+        """
+        Creates a new instance of Muscle with mutated genotype type.
+        """
         if self.type == 'fourier':
             new_type = 'direct'
 
@@ -215,6 +256,9 @@ class Muscle:
         )
 
     def mutate_sampling_interval(self):
+        """
+        Creates a new instance of Muscle with mutated sampling interval.
+        """
         new_sampling_interval = random.choice(list(filter(lambda si: self.period // si >= self.precision, self.SAMPLING_INTERVALS)))
         if new_sampling_interval == self.sampling_interval:
             return self
@@ -250,6 +294,9 @@ class Muscle:
         )
 
     def mutate_precision(self):
+        """
+        Creates a new instance of Muscle with mutated precision.
+        """
         new_precision = random.choice(list(filter(lambda p: self.period // self.sampling_interval >= p, self.PRECISIONS)))
         if new_precision == self.precision:
             return self
@@ -285,6 +332,9 @@ class Muscle:
         )
 
     def mutate_components(self, mutation_rate, mutation_amount):
+        """
+        Creates a new instance of Muscle with mutated components.
+        """
         if self.type == 'fourier':
             new_components = self.mutate_fourier_components(mutation_rate, mutation_amount)
         else:
@@ -301,6 +351,9 @@ class Muscle:
         )
 
     def mutate_fourier_components(self, mutation_rate, mutation_amount):
+        """
+        Creates new mutated version of fourier components.
+        """
         new_components = copy.deepcopy(self.components)
 
         for i in range(len(new_components)):
@@ -346,6 +399,9 @@ class Muscle:
         return new_components
 
     def mutate_direct_components(self, mutation_rate, mutation_amount):
+        """
+        Creates new mutated version of direct components.
+        """
         new_components = copy.deepcopy(self.components)
         for i in range(len(new_components)):
             if np.random.uniform() <= mutation_rate:

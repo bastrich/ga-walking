@@ -17,20 +17,23 @@ from itertools import groupby
 # configuration options
 POPULATION_SIZE = 150
 POPULATION_FILE_PATH = 'results/population_3d'
-READ_POPULATION_FROM_FILE = False
+READ_POPULATION_FROM_FILE = False # if True, the GA will read the initial population from POPULATION_FILE_PATH instead of random generation
 ANALYTICS_FILE_PATH = 'results/analytics_population_3d'
-MODE = '3D'  # 3D
-INITIAL_GENERATION = 'perlin'  # or random
-FRAME_SKIPPING = 'action_repeat'  # or action_repeat
-PARALLELIZATION = 30
+MODE = '3D'  # 2D or 3D
+INITIAL_GENERATION = 'perlin'  # perlin or random
+FRAME_SKIPPING = 'action_repeat'  # action_repeat or interpolation
+PARALLELIZATION = 30 # number of parallel processes
 NUMBER_OF_GENERATIONS = 2000
 SIM_STEPS_PER_GENERATION = 1000
 MUTABILITY_DECREASE_THRESHOLD = 5
 MUTABILITY_INCREASE_THRESHOLD = 10
-ELITES_RATIO = 0.2
-SIM_INTEGRATOR_ACCURACY = 0.001
+ELITES_RATIO = 0.2 # ratio of walking strategies to preserve in each population
+SIM_INTEGRATOR_ACCURACY = 0.001 # accuracy configuration of OpenSim
 
 def update_mutation_parameters(generations_with_improvement, generations_without_improvement, current_mutation_parameters):
+    """
+    Helper function to update mutation rates depending on the learning rate.
+    """
     new_mutation_parameters = copy.deepcopy(current_mutation_parameters)
 
     if generations_with_improvement >= 1 and generations_with_improvement % MUTABILITY_DECREASE_THRESHOLD == 0:
@@ -67,14 +70,17 @@ analytics = []
 # required for multiprocessing
 if __name__ == "__main__":
 
+    # init simulation environment
     parallel_sim = ParallelSim(mode=MODE, parallelization=PARALLELIZATION, integrator_accuracy = SIM_INTEGRATOR_ACCURACY)
     population_evaluator = PopulationEvaluator(parallelization=PARALLELIZATION)
 
+    # register shotdown hook for graceful shutdown
     def shutdown_hook():
         parallel_sim.shutdown()
         population_evaluator.shutdown()
     atexit.register(shutdown_hook)
 
+    # init mutation rates
     mutation_parameters = {
         'mutation_rate': 0.8,
         'period_mutation_rate': 0.2,
@@ -90,7 +96,7 @@ if __name__ == "__main__":
     generations_with_improvement = 0
     generations_without_improvement = 0
 
-
+    # run genetic algorithm
     for generation in range(NUMBER_OF_GENERATIONS):
         print(f'Starting generation: {generation + 1}/{NUMBER_OF_GENERATIONS}')
 
@@ -104,6 +110,7 @@ if __name__ == "__main__":
         with open(POPULATION_FILE_PATH, 'wb') as file:
             pickle.dump(population, file)
 
+        # monitoring learning rates for dynamic update of mutation rates
         best_simulation_result = max(simulation_results, key=lambda simulation_result: simulation_result['fitness'])
         current_fitness = best_simulation_result['fitness']
         if current_fitness > best_fitness:
@@ -114,6 +121,7 @@ if __name__ == "__main__":
             generations_with_improvement = 0
             generations_without_improvement += 1
 
+        # collect analytics
         periods_distribution = {period: len(list(periods)) for period, periods in groupby(sorted([simulation_result['walking_strategy'].period for simulation_result in simulation_results]))}
         for period in Muscle.PERIODS:
             if period not in periods_distribution.keys():

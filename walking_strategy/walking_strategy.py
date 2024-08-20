@@ -3,8 +3,24 @@ from walking_strategy.muscle import Muscle
 
 
 class WalkingStrategy:
+    """
+    Represents a walking strategy with muscles.
+    """
 
     def __init__(self, mode=None, fixed_period=None, fixed_type=None, fixed_sampling_interval=None, fixed_precision=None, initial_generation='perlin', frame_skipping='action_repeat', muscles=None):
+        """
+        Initiates a new instance of walking strategy.
+
+        Args:
+            mode (str):
+            fixed_period (int):
+            fixed_type (int):
+            fixed_sampling_interval (int):
+            fixed_precision (int):
+            initial_generation (str):
+            frame_skipping (str):
+            muscles (list):
+        """
         if muscles is not None:
             if len(muscles) != 11:
                 raise ValueError("muscles must have size 11")

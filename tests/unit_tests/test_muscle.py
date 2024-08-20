@@ -3,7 +3,10 @@ from unittest.mock import patch, call
 from walking_strategy.muscle import Muscle
 
 
-class TestMyClass(unittest.TestCase):
+class TestMuscle(unittest.TestCase):
+
+    def test_genotype_validation(self):
+        self.assertRaises(ValueError, Muscle, 200, '4D')
 
     # @patch('numpy.random.choice')
     # @patch.object(Muscle, 'generate_random_activations_dna')

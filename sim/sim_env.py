@@ -1,3 +1,5 @@
+# this code is partially based on the code from https://github.com/stanfordnmbl/osim-rl/blob/master/osim/env/osim.py
+
 import numpy as np
 from sim.osim_model import OsimModel
 
@@ -39,19 +41,6 @@ class SimEnv:
                 0*np.pi/180, # knee extend
                 0*np.pi/180 # ankle flex
             ])
-
-        self.Fmax = {}
-        self.lopt = {}
-        for leg, side in zip(['r_leg', 'l_leg'], ['r', 'l']):
-            self.Fmax[leg] = {}
-            self.lopt[leg] = {}
-            for MUS, mus in zip(    ['HAB', 'HAD', 'HFL', 'GLU', 'HAM', 'RF', 'VAS', 'BFSH', 'GAS', 'SOL', 'TA'],
-                                    ['abd', 'add', 'iliopsoas', 'glut_max', 'hamstrings', 'rect_fem', 'vasti', 'bifemsh', 'gastroc', 'soleus', 'tib_ant']):
-                muscle = self.osim_model.muscleSet.get('{}_{}'.format(mus,side))
-                # Fmax = muscle.getMaxIsometricForce()
-                # lopt = muscle.getOptimalFiberLength()
-                self.Fmax[leg][MUS] = muscle.getMaxIsometricForce()
-                self.lopt[leg][MUS] = muscle.getOptimalFiberLength()
 
     def reset(self):
         # initialize state
@@ -97,4 +86,4 @@ class SimEnv:
         return self.get_state_desc()
 
     def get_state_desc(self):
-        return self.osim_model.get_state_desc()
+        return self.osim_model.compute_state_desc()
