@@ -12,14 +12,14 @@ class WalkingStrategy:
         Initiates a new instance of walking strategy.
 
         Args:
-            mode (str):
-            fixed_period (int):
-            fixed_type (int):
-            fixed_sampling_interval (int):
-            fixed_precision (int):
-            initial_generation (str):
-            frame_skipping (str):
-            muscles (list):
+            mode (str): 2D or 3D.
+            fixed_period (int): if set, no mutation of period happens.
+            fixed_type (int): if set, no mutation of type happens.
+            fixed_sampling_interval (int): if set, no mutation of sampling_interval happens.
+            fixed_precision (int): if set, no mutation of precision happens.
+            initial_generation (str): random or perlin
+            frame_skipping (str): interpolation or action_repeat
+            muscles (list): if set, other arguments are ignored
         """
         if muscles is not None:
             if len(muscles) != 11:
@@ -55,9 +55,15 @@ class WalkingStrategy:
         self.fixed_precision = fixed_precision
 
     def get_muscles_activations(self, time):
+        """
+        Returns activation for each muscle at specified time.
+        """
         return ([muscle.get_activation(time) for muscle in self.muscles] + [muscle.get_activation(time + self.period // 2) for muscle in self.muscles])
 
     def mutate(self, mutation_rate, period_mutation_rate, type_mutation_rate, sampling_interval_mutation_rate, precision_mutation_rate, components_mutation_rate, components_mutation_amount):
+        """
+        Mutates thw whole walking strategy.
+        """
         if np.random.uniform() > mutation_rate:
             return self
 
@@ -86,6 +92,9 @@ class WalkingStrategy:
         )
 
     def crossover(self, other):
+        """
+        Executes the crossover of this and other walking strategy.
+        """
         new_period = np.random.choice([self.period, other.period])
         switch_index = np.random.randint(0, len(self.muscles) + 1)
 

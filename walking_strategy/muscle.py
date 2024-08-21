@@ -359,6 +359,7 @@ class Muscle:
         for i in range(len(new_components)):
             if np.random.uniform() < mutation_rate:
                 if np.random.uniform() < 0.8:
+                    # mutate amplitude
                     mutation = mutation_amount * np.clip(np.random.normal(0, self.period // self.sampling_interval), -self.period // self.sampling_interval * 0.5, self.period // self.sampling_interval * 0.5)
                     if np.abs(mutation) < self.period // self.sampling_interval * 0.05:
                         mutation = np.sign(mutation) * self.period // self.sampling_interval * 0.05
@@ -370,6 +371,8 @@ class Muscle:
                         mutation *= new_components[i] / np.abs(new_components[i])
 
                     new_components[i] += mutation
+
+                    # try to keep activation inside [1, 0]
                     signal = np.real(np.fft.ifft(np.pad(new_components, (0, self.period // self.sampling_interval - len(new_components)), 'constant')))
                     min_value = np.min(signal)
                     max_value = np.max(signal)
@@ -383,11 +386,12 @@ class Muscle:
                     elif max_value > 1:
                         new_components[i] *= 1 / np.abs(max_value)
                 elif np.random.choice([True, False]):
+                    # imitation of shrink mutation
                     new_components[i] = 0j
                 else:
+                    # mutate phase
                     phase = np.random.uniform(-np.pi, np.pi)
-                    new_components[i] = 0.5 * self.period // self.sampling_interval * (
-                                np.cos(phase) + 1j * np.sin(phase))
+                    new_components[i] = 0.5 * self.period // self.sampling_interval * (np.cos(phase) + 1j * np.sin(phase))
 
             if i != 0 and np.random.uniform() < mutation_rate:
                 mutation = mutation_amount * np.clip(np.random.normal(0, np.pi), -np.pi / 2, np.pi / 2)

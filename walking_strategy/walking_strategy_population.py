@@ -2,6 +2,10 @@ from walking_strategy.walking_strategy import WalkingStrategy
 
 
 class WalkingStrategyPopulation:
+    """
+    Represents a population of walking strategies.
+    """
+
     def __init__(self, mode=None, walking_strategies=None, size=None, initial_generation='perlin', frame_skipping='action_repeat'):
         if walking_strategies is not None:
             self.walking_strategies = walking_strategies

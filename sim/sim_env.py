@@ -5,6 +5,9 @@ from sim.osim_model import OsimModel
 
 
 class SimEnv:
+    """
+    Encapsulates technical details of OpenSim env and model.
+    """
 
     act2mus = [0, 1, 4, 7, 3, 2, 5, 6, 8, 9, 10, 11, 12, 15, 18, 14, 13, 16, 17, 19, 20, 21]
 

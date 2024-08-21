@@ -63,5 +63,8 @@ class PopulationEvaluator:
         return new_walking_strategy
 
     def shutdown(self):
+        """
+        Gracefully shuts down the process pool.
+        """
         if self.populations_executor:
             self.populations_executor.shutdown()
