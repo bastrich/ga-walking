@@ -143,7 +143,6 @@ class Sim:
         self.fitness_helpers['footstep_duration'] += dt
 
         distance_traveled = current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]
-        self.fitness_helpers['footstep_delta_x'] += distance_traveled
 
         result += 10 * distance_traveled * np.abs(distance_traveled) / np.linalg.norm(np.array([current_state['body_pos']['pelvis'][0], current_state['body_pos']['pelvis'][2]]) - np.array([prev_state['body_pos']['pelvis'][0], prev_state['body_pos']['pelvis'][2]]))
 
@@ -211,7 +210,6 @@ class Sim:
         self.fitness_helpers['footstep_duration'] += dt
 
         distance_traveled = current_state['body_pos']['pelvis'][0] - prev_state['body_pos']['pelvis'][0]
-        self.fitness_helpers['footstep_delta_x'] += distance_traveled
 
         result += 30 * distance_traveled * np.abs(distance_traveled) / np.linalg.norm(np.array([current_state['body_pos']['pelvis'][0], current_state['body_pos']['pelvis'][2]]) - np.array([prev_state['body_pos']['pelvis'][0], prev_state['body_pos']['pelvis'][2]]))
 
