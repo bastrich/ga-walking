@@ -25,6 +25,7 @@ class PopulationEvaluator:
         number_to_preserve = int(np.round(elites_ratio * len(simulation_results)))
         new_walking_strategies += [simulation_result['walking_strategy'] for simulation_result in heapq.nlargest(number_to_preserve, simulation_results, key=lambda simulation_result: simulation_result['fitness'])]
 
+        # make all fitness values non-negative to correctly build and use the fit map
         print('Adjusting fitness values...')
         fits = [simulation_result['fitness'] for simulation_result in simulation_results]
         min_fit = np.min(fits)
