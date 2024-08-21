@@ -1,41 +1,25 @@
 import unittest
-from unittest.mock import patch, call
-from walking_strategy.muscle import Muscle
+from walking_strategy.walking_strategy import WalkingStrategy
+from walking_strategy.walking_strategy_population import WalkingStrategyPopulation
 
 
 class TestMuscle(unittest.TestCase):
 
-    def test_genotype_validation(self):
-        self.assertRaises(ValueError, Muscle, 200, '4D')
+    def test_create_new(self):
+        self.assertRaises(ValueError, WalkingStrategyPopulation, '2D', None, None)
+        self.assertRaises(ValueError, WalkingStrategyPopulation, None, None, 10)
+        self.assertRaises(ValueError, WalkingStrategyPopulation, None, None, None)
 
-    # @patch('numpy.random.choice')
-    # @patch.object(Muscle, 'generate_random_activations_dna')
-    # @patch.object(Muscle, 'calculate_fourier_activations')
-    def test_random_init(self):
-    # def test_random_init(self, mock_calculate_fourier_activations, mock_generate_random_activations_dna, mock_choice):
-        period = 120
-        discretization_frequency = 40
-        activations_format = 'fourier'
-        activations_dna = [1, 2, 3]
-        muscle_activations = [4, 5, 6]
+        population = WalkingStrategyPopulation('2D', None, 10)
 
-        # mock_choice.side_effect = [discretization_frequency, activations_format]
-        # mock_generate_random_activations_dna.return_value = activations_dna
-        # mock_calculate_fourier_activations.return_value = muscle_activations
+        self.assertEqual(10, len(population.walking_strategies))
+        for walking_strategy in population.walking_strategies:
+            self.assertIsInstance(walking_strategy, WalkingStrategy)
 
-        muscle = Muscle(period, '2D')
+    def test_create_from_existing_strategies(self):
+        walking_strategies = [WalkingStrategy('2D') for _ in range(5)]
+        population = WalkingStrategyPopulation(None, walking_strategies, None)
 
-        # self.assertEqual(muscle.discretization_frequency, discretization_frequency)
-        # self.assertEqual(muscle.activations_format, activations_format)
-        # self.assertEqual(muscle.activations_dna, activations_dna)
-        # self.assertEqual(muscle.muscle_activations, muscle_activations)
-        # self.assertEqual(
-        #     mock_choice.call_args_list,
-        #     [call([5, 10, 20, 40]), call(['direct', 'fourier'])]
-        # )
-        # mock_generate_random_activations_dna.assert_called_once_with(period, activations_format, discretization_frequency)
-        # mock_calculate_fourier_activations.assert_called_once_with(activations_dna, period)
-
-
-# if __name__ == '__main__':
-#     unittest.main()
+        self.assertEqual(5,len(population.walking_strategies))
+        for walking_strategy in population.walking_strategies:
+            self.assertIsInstance(walking_strategy, WalkingStrategy)

@@ -24,7 +24,7 @@ class TestSim(unittest.TestCase):
             self.assertIsNotNone(simulation_result['energy'])
             self.assertIsInstance(simulation_result['fitness'], float)
 
-            self.assertEqual(simulation_result['steps'], 5)
+            self.assertEqual(5, simulation_result['steps'])
 
         parallel_sim.shutdown()
 
@@ -47,6 +47,6 @@ class TestSim(unittest.TestCase):
             self.assertIsNotNone(simulation_result['energy'])
             self.assertIsInstance(simulation_result['fitness'], float)
 
-            self.assertEqual(simulation_result['steps'], 10)
+            self.assertEqual(10, simulation_result['steps'])
 
         parallel_sim.shutdown()

@@ -15,4 +15,4 @@ class WalkingStrategyPopulation:
             self.walking_strategies = [WalkingStrategy(mode=mode, fixed_period=160 if mode == '3D' else None, initial_generation=initial_generation, frame_skipping=frame_skipping) for _ in range(size)]
             return
 
-        raise Exception('Wrong arguments')
+        raise ValueError('Wrong arguments')
