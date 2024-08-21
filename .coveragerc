@@ -1,0 +1,5 @@
+[run]
+concurrency=multiprocessing
+
+[report]
+omit=tests/unit_tests/*

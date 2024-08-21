@@ -10,4 +10,5 @@ Details about setting up a project with OpenSim environment are available here: 
 
 ### Running unit tests
 1) _coverage run -m unittest discover tests/unit_tests_
-2) _coverage html_
+2) _coverage combine_
+3) _coverage html_
