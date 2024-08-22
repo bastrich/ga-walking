@@ -3,7 +3,7 @@ from walking_strategy.walking_strategy import WalkingStrategy
 from walking_strategy.walking_strategy_population import WalkingStrategyPopulation
 
 
-class TestMuscle(unittest.TestCase):
+class TestWalkingStrategyPopulation(unittest.TestCase):
 
     def test_create_new(self):
         self.assertRaises(ValueError, WalkingStrategyPopulation, '2D', None, None)
