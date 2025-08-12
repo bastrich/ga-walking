@@ -1,5 +1,7 @@
 # Genetic algorithm to train a biomechanical model of a human to walk
 
+Detailed report: [report](report.pdf)
+
 Details about setting up a project with OpenSim environment are available here: https://opensimconfluence.atlassian.net/wiki/spaces/OpenSim/pages/53085346/Scripting+in+Python
 
 ### Short instructions for this specific project (Windows 10):
